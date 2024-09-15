@@ -26,12 +26,12 @@ int num_vars;
 %%
 
 programa    :{
-             generateCode (NULL, "INPP");
+             generate_code(NULL, "INPP");
              }
              PROGRAM IDENTIFIER
              OPEN_PARENTHESIS lista_idents CLOSE_PARENTHESIS SEMICOLON
              bloco DOT {
-               generateCode (NULL, "PARA");
+               generate_code(NULL, "PARA");
              }
 ;
 

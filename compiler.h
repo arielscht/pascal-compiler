@@ -53,6 +53,6 @@ extern int num_lines;
  * global prototypes
  * ------------------------------------------------------------------- */
 
-void generateCode(char *, char *);
+void generate_code(char *, char *);
 int yylex();
 void yyerror(const char *s);
