@@ -43,7 +43,7 @@ int print_error(char *error)
   exit(-1);
 }
 
-void yyerror(const char *s)
+void yyerror(char *s)
 {
   fprintf(stderr, "Error: %s\n", s);
 }

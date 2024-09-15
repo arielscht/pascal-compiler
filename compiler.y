@@ -25,65 +25,60 @@ int num_vars;
 
 %%
 
-programa    :{
-             generate_code(NULL, "INPP");
-             }
-             PROGRAM IDENTIFIER
-             OPEN_PARENTHESIS lista_idents CLOSE_PARENTHESIS SEMICOLON
-             bloco DOT {
-               generate_code(NULL, "PARA");
-             }
+program    :
+               {
+                  generate_code(NULL, "INPP");
+               }
+               PROGRAM IDENTIFIER
+               OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON
+               bloco DOT 
+               {
+                  generate_code(NULL, "PARA");
+               }
 ;
 
-bloco       :
-              parte_declara_vars
-              {
-              }
-
-              comando_composto
-              ;
-
-
-
-
-parte_declara_vars:  var
+block       :
+               vars_declaration
+               {
+               }
+               compound_command
 ;
 
+vars_declaration:  var
+;
 
-var         : { } VAR declara_vars
+var         : { } VAR declare_vars
             |
 ;
 
-declara_vars: declara_vars declara_var
-            | declara_var
+declare_vars: declare_vars declare_var
+            | declare_var
 ;
 
-declara_var : { }
-              lista_id_var COLON
-              tipo
+declare_var : { }
+              var_list COLON
+              type
               { /* AMEM */
               }
               SEMICOLON
 ;
 
-tipo        : IDENTIFIER
+type        : IDENTIFIER
 ;
 
-lista_id_var: lista_id_var COMMA IDENTIFIER
+var_list: var_list COMMA IDENTIFIER
               { /* insere �ltima vars na tabela de s�mbolos */ }
             | IDENTIFIER { /* insere vars na tabela de s�mbolos */}
 ;
 
-lista_idents: lista_idents COMMA IDENTIFIER
+identifiers_list: identifiers_list COMMA IDENTIFIER
             | IDENTIFIER
 ;
 
+compound_command: T_BEGIN commands T_END
 
-comando_composto: T_BEGIN comandos T_END
-
-comandos:
+commands:
 ;
-
 
 %%
 
