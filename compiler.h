@@ -33,6 +33,10 @@ typedef enum symbols
   while_symbol,
   do_symbol,
   int_div_symbol,
+  plus_symbol,
+  minus_symbol,
+  multiply_symbol,
+  div_symbol
 } symbols;
 
 /* -------------------------------------------------------------------

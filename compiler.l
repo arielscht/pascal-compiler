@@ -162,7 +162,7 @@ do      {
           return DO;
         }
 
-intdiv  {
+div  {
           symbol = int_div_symbol;
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" intdiv  ");
@@ -231,6 +231,34 @@ intdiv  {
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" close_brackets ");
           return CLOSE_BRACKETS;
+        }
+
+\+      {
+          symbol = plus_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" plus ");
+          return PLUS;
+        }
+
+\-      {
+          symbol = minus_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" minus ");
+          return MINUS;
+        }
+
+\*      {
+          symbol = multiply_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" multiply ");
+          return MULTIPLY;
+        }
+
+\/      {
+          symbol = div_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" divide ");
+          return DIVIDE;
         }
 
 {identifier} { 
