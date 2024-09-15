@@ -1,25 +1,14 @@
- # -------------------------------------------------------------------
- #            Arquivo: Makefile
- # -------------------------------------------------------------------
- #              Autor: Bruno Müller Junior
- #               Data: 08/2007
- #      Atualizado em: [09/08/2020, 19h:01m]
- #
- # -------------------------------------------------------------------
+compiler: lex.yy.c compiler.tab.c compiler.o compiler.h
+	gcc lex.yy.c compiler.tab.c compiler.o -o compiler -ll -lc
 
-$DEPURA=1
+lex.yy.c: compiler.l compiler.h
+	flex compiler.l
 
-compilador: lex.yy.c compilador.tab.c compilador.o compilador.h
-	gcc lex.yy.c compilador.tab.c compilador.o -o compilador -ll -ly -lc
+compiler.tab.c: compiler.y compiler.h
+	bison compiler.y -d -v
 
-lex.yy.c: compilador.l compilador.h
-	flex compilador.l
-
-compilador.tab.c: compilador.y compilador.h
-	bison compilador.y -d -v
-
-compilador.o : compilador.h compiladorF.c
-	gcc -c compiladorF.c -o compilador.o
+compiler.o : compiler.h compilerF.c
+	gcc -c compilerF.c -o compiler.o
 
 clean :
-	rm -f compilador.tab.* lex.yy.c compilador.o compilador
+	rm -f compiler.tab.* lex.yy.c compiler.o compiler
