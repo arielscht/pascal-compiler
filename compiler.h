@@ -39,6 +39,26 @@ typedef enum symbols
   div_symbol
 } symbols;
 
+typedef enum symbol_category
+{
+  SIMPLE_VAR,
+} symbol_category;
+
+typedef enum var_type
+{
+  INTEGER,
+  BOOLEAN,
+} var_type;
+
+typedef struct symbol_entry
+{
+  symbol_category category;
+  char *identifier;
+  int lexical_level;
+  int offset;
+  var_type type;
+} symbol_entry;
+
 /* -------------------------------------------------------------------
  * global variables
  * ------------------------------------------------------------------- */
@@ -55,4 +75,4 @@ extern int num_lines;
 
 void generate_code(char *, char *);
 int yylex();
-void yyerror(const char *s);
+void yyerror(char *s);

@@ -8,9 +8,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "compiler.h"
 
-int num_vars;
+#include "compiler.h"
+#include "stack.h"
+
+#define BUFFER_SIZE 10
+
+int num_vars = 0;
+char buffer[BUFFER_SIZE];
 
 %}
 
@@ -25,57 +30,69 @@ int num_vars;
 
 %%
 
-program    :
-               {
-                  generate_code(NULL, "INPP");
-               }
-               PROGRAM IDENTIFIER
-               OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON
-               bloco DOT 
-               {
-                  generate_code(NULL, "PARA");
-               }
+program:
+                     {
+                        generate_code(NULL, "INPP");
+                     }
+                     PROGRAM IDENTIFIER
+                     OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON
+                     block DOT 
+                     {
+                        generate_code(NULL, "PARA");
+                     }
 ;
 
-block       :
-               vars_declaration
-               {
-               }
-               compound_command
+block:
+                     vars_declaration
+                     {
+                     }
+                     compound_command
 ;
 
-vars_declaration:  var
+vars_declaration: 
+                     VAR declare_vars
+                     | /* empty */
 ;
 
-var         : { } VAR declare_vars
-            |
+declare_vars: 
+                     declare_vars declare_var
+                     | declare_var
 ;
 
-declare_vars: declare_vars declare_var
-            | declare_var
+declare_var: 
+                     { }
+                     var_list COLON
+                     type
+                     {
+                        sprintf(buffer, "AMEM %d", num_vars);
+                        generate_code(NULL, buffer);
+                        num_vars = 0;
+                     }
+                     SEMICOLON
 ;
 
-declare_var : { }
-              var_list COLON
-              type
-              { /* AMEM */
-              }
-              SEMICOLON
+type: 
+                     IDENTIFIER
 ;
 
-type        : IDENTIFIER
+var_list: 
+                     var_list COMMA IDENTIFIER
+                     { /* insere �ltima vars na tabela de s�mbolos */
+                        num_vars += 1;
+                     }
+                     | IDENTIFIER 
+                     { /* insere vars na tabela de s�mbolos */
+                        num_vars += 1;
+                     }
 ;
 
-var_list: var_list COMMA IDENTIFIER
-              { /* insere �ltima vars na tabela de s�mbolos */ }
-            | IDENTIFIER { /* insere vars na tabela de s�mbolos */}
+identifiers_list: 
+                     identifiers_list COMMA IDENTIFIER
+                     | IDENTIFIER
 ;
 
-identifiers_list: identifiers_list COMMA IDENTIFIER
-            | IDENTIFIER
-;
-
-compound_command: T_BEGIN commands T_END
+compound_command: 
+                     T_BEGIN commands T_END
 
 commands:
 ;
