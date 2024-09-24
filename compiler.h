@@ -48,12 +48,15 @@ typedef enum var_type
 {
   INTEGER,
   BOOLEAN,
+  UNKNOWN,
 } var_type;
 
 typedef struct symbol_entry
 {
+  struct symbol_entry *prev;
+  struct symbol_entry *next;
   symbol_category category;
-  char *identifier;
+  char identifier[TOKEN_SIZE];
   int lexical_level;
   int offset;
   var_type type;

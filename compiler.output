@@ -57,9 +57,11 @@ Grammar
    15 identifiers_list: identifiers_list COMMA IDENTIFIER
    16                 | IDENTIFIER
 
-   17 compound_command: T_BEGIN commands T_END
+   17 $@5: %empty
 
-   18 commands: %empty
+   18 compound_command: $@5 T_BEGIN commands T_END
+
+   19 commands: %empty
 
 
 Terminals, with rules where they appear
@@ -75,8 +77,8 @@ Terminals, with rules where they appear
     SEMICOLON (264) 2 11
     COLON (265) 11
     DOT (266) 2
-    T_BEGIN (267) 17
-    T_END (268) 17
+    T_BEGIN (267) 18
+    T_END (268) 18
     VAR (269) 5
     IDENTIFIER (270) 2 12 13 14 15 16
     ASSIGNMENT (271)
@@ -143,11 +145,14 @@ Nonterminals, with rules where they appear
         on left: 15 16
         on right: 2 15
     compound_command (50)
-        on left: 17
-        on right: 4
-    commands (51)
         on left: 18
-        on right: 17
+        on right: 4
+    $@5 (51)
+        on left: 17
+        on right: 18
+    commands (52)
+        on left: 19
+        on right: 18
 
 
 State 0
@@ -319,9 +324,10 @@ State 20
 
     4 block: vars_declaration $@2 . compound_command
 
-    T_BEGIN  shift, and go to state 24
+    $default  reduce using rule 17 ($@5)
 
-    compound_command  go to state 25
+    compound_command  go to state 24
+    $@5               go to state 25
 
 
 State 21
@@ -349,18 +355,16 @@ State 23
 
 State 24
 
-   17 compound_command: T_BEGIN . commands T_END
+    4 block: vars_declaration $@2 compound_command .
 
-    $default  reduce using rule 18 (commands)
-
-    commands  go to state 28
+    $default  reduce using rule 4 (block)
 
 
 State 25
 
-    4 block: vars_declaration $@2 compound_command .
+   18 compound_command: $@5 . T_BEGIN commands T_END
 
-    $default  reduce using rule 4 (block)
+    T_BEGIN  shift, and go to state 28
 
 
 State 26
@@ -381,9 +385,11 @@ State 27
 
 State 28
 
-   17 compound_command: T_BEGIN commands . T_END
+   18 compound_command: $@5 T_BEGIN . commands T_END
 
-    T_END  shift, and go to state 32
+    $default  reduce using rule 19 (commands)
+
+    commands  go to state 32
 
 
 State 29
@@ -411,19 +417,26 @@ State 31
 
 State 32
 
-   17 compound_command: T_BEGIN commands T_END .
+   18 compound_command: $@5 T_BEGIN commands . T_END
 
-    $default  reduce using rule 17 (compound_command)
+    T_END  shift, and go to state 34
 
 
 State 33
 
    11 declare_var: $@3 var_list COLON type $@4 . SEMICOLON
 
-    SEMICOLON  shift, and go to state 34
+    SEMICOLON  shift, and go to state 35
 
 
 State 34
+
+   18 compound_command: $@5 T_BEGIN commands T_END .
+
+    $default  reduce using rule 18 (compound_command)
+
+
+State 35
 
    11 declare_var: $@3 var_list COLON type $@4 SEMICOLON .
 
