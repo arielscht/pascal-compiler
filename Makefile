@@ -14,4 +14,4 @@ stack.o: stack.c stack.h
 	gcc -c stack.c -o stack.o
 
 clean :
-	rm -f compiler.tab.* lex.yy.c compiler.o compiler
+	rm -f compiler.tab.* lex.yy.c compiler.o stack.o compiler

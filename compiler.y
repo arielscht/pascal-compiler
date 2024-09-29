@@ -19,7 +19,8 @@ char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
 
 void print_elem(void *ptr);
-int add_symbol(symbol_category category, var_type type, char *identifier);
+void add_symbol(symbol_category category, var_type type, char *identifier);
+int set_var_types(var_type type);
 
 %}
 
@@ -81,9 +82,11 @@ type:
                         stack_print("Table of symbols\n", symbol_table, print_elem);
                         printf("identifier: %s\n", token);
                         if(strcmp(token, "integer") == 0) {
-
+                           set_var_types(INTEGER);
+                           stack_print("Table of symbols\n", symbol_table, print_elem);
                         } else if(strcmp(token, "boolean") == 0) {
-
+                           set_var_types(BOOLEAN);
+                           stack_print("Table of symbols\n", symbol_table, print_elem);
                         } else {
                            sprintf(buffer, "Unknown type %s", token);
                            yyerror(buffer);
@@ -126,7 +129,38 @@ commands:
 
 %%
 
-int add_symbol(symbol_category category, var_type type, char *identifier) {
+int check_unknown_type(void *ptr) {
+   symbol_entry *elem = ptr;
+
+   if(!elem) {
+      return 0;
+   }
+
+   if(elem->type == UNKNOWN) {
+      return 1;
+   }
+
+   return 0;
+}
+
+int update_type(symbol_entry **symbol, var_type type) { 
+   (*symbol)->type = type; 
+}
+
+int set_var_types(var_type type) {
+   symbol_entry *symbol;
+
+   symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
+
+   while(symbol != NULL) {
+      update_type(&symbol, type);
+      symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
+   }
+
+   return 0;
+}
+
+void add_symbol(symbol_category category, var_type type, char *identifier) {
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->category = category;
    strncpy(symbol->identifier, token, TOKEN_SIZE);

@@ -84,3 +84,37 @@ int stack_pop(stack_t **stack)
 
     return 0;
 }
+
+stack_elem_t *stack_search(stack_t *stack, int check_elem(void *))
+{
+    stack_elem_t *cur_element;
+
+    cur_element = stack->top;
+
+    while (cur_element != NULL)
+    {
+        if (check_elem(cur_element) == 1)
+        {
+            return cur_element;
+        }
+        cur_element = cur_element->prev;
+    };
+
+    return NULL;
+}
+
+int stack_update(stack_t **stack, int check_elem(void *), void update_elem(void *))
+{
+    stack_elem_t *element_to_update;
+
+    element_to_update = stack_search(*stack, check_elem);
+
+    if (element_to_update == NULL)
+    {
+        return 1;
+    }
+
+    update_elem(element_to_update);
+
+    return 0;
+}

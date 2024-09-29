@@ -25,4 +25,8 @@ int stack_push(stack_t **stack, stack_elem_t *elem);
 
 int stack_pop(stack_t **stack);
 
+stack_elem_t *stack_search(stack_t *stack, int check_elem(void *));
+
+int stack_update(stack_t **stack, int check_elem(void *), void update_elem(void *));
+
 #endif
