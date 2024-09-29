@@ -21,6 +21,10 @@ stack_t *symbol_table;
 void print_elem(void *ptr);
 void add_symbol(symbol_category category, var_type type, char *identifier);
 int set_var_types(var_type type);
+int (*get_symbol_checker(char *symbol))(void *);
+int check_symbol(void *ptr);
+char *symbol_to_find;
+symbol_entry *var_to_assign;
 
 %}
 
@@ -125,9 +129,46 @@ compound_command:
                      }
 
 commands:
+                     assignment
+;
+
+assignment:
+                     IDENTIFIER
+                     {
+                        symbol_entry *symbol;
+                        symbol_to_find = token;
+                        symbol = (symbol_entry *)stack_search(symbol_table, check_symbol);
+
+                        if(symbol == NULL) {
+                           sprintf(buffer, "%s is not defined.", token);
+                           yyerror(buffer);
+                        } else {
+                           if(symbol->category != SIMPLE_VAR) {
+                              sprintf(buffer, "%s is not a simple var.", token);
+                              yyerror(buffer);
+                           } else {
+                              var_to_assign = symbol;
+                           }
+                        }
+                     }
+                     ASSIGNMENT expression
+;
+
+expression:
+
 ;
 
 %%
+
+int check_symbol(void *ptr) {
+   symbol_entry *elem = ptr;
+
+   if(strcmp(symbol_to_find, elem->identifier) == 0) {
+      return 1;
+   }
+
+   return 0;
+}
 
 int check_unknown_type(void *ptr) {
    symbol_entry *elem = ptr;
