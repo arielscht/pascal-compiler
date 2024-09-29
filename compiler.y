@@ -31,7 +31,7 @@ symbol_entry *var_to_assign;
 %token PROGRAM OPEN_PARENTHESIS CLOSE_PARENTHESIS
 %token OPEN_BRACKETS CLOSE_BRACKETS
 %token COMMA SEMICOLON COLON DOT
-%token T_BEGIN T_END VAR IDENTIFIER ASSIGNMENT
+%token T_BEGIN T_END VAR IDENTIFIER ASSIGNMENT NUMBER
 %token LABEL TYPE ARRAY OF PROCEDURE FUNCTION
 %token GOTO 
 %token IF THEN ELSE NOT OR AND WHILE DO
@@ -151,11 +151,33 @@ assignment:
                            }
                         }
                      }
-                     ASSIGNMENT expression
+                     ASSIGNMENT expression 
+                     {
+                        sprintf(buffer, "AMRZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
+                        generate_code(NULL, buffer);
+                     }
+                     SEMICOLON
 ;
 
 expression:
+                     simple_expression
+;
 
+simple_expression:
+                     term
+;
+
+term: 
+                     factor
+;
+
+factor:
+                     NUMBER
+                     {
+                        sprintf(buffer, "CRCT %s", token);
+                        generate_code(NULL, buffer);
+                     }
+                     | IDENTIFIER
 ;
 
 %%

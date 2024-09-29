@@ -17,7 +17,7 @@ discard [\t ]+
 
 identifier [a-zA-Z][a-zA-Z0-9]*
 
-numero [0-9]+
+number [0-9]+
 
 comment "(*".*"*)"
 
@@ -267,5 +267,12 @@ div  {
               PRINT(" identifier  ");
               return IDENTIFIER;
             }
+
+{number} {
+              symbol = number_symbol;
+              strncpy (token, yytext, TOKEN_SIZE);
+              PRINT(" number  ");
+              return NUMBER;
+}
 
 %%

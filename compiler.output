@@ -64,9 +64,18 @@ Grammar
 
    20 $@6: %empty
 
-   21 assignment: IDENTIFIER $@6 ASSIGNMENT expression
+   21 $@7: %empty
 
-   22 expression: %empty
+   22 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 SEMICOLON
+
+   23 expression: simple_expression
+
+   24 simple_expression: term
+
+   25 term: factor
+
+   26 factor: NUMBER
+   27       | IDENTIFIER
 
 
 Terminals, with rules where they appear
@@ -79,94 +88,107 @@ Terminals, with rules where they appear
     OPEN_BRACKETS (261)
     CLOSE_BRACKETS (262)
     COMMA (263) 13 15
-    SEMICOLON (264) 2 11
+    SEMICOLON (264) 2 11 22
     COLON (265) 11
     DOT (266) 2
     T_BEGIN (267) 18
     T_END (268) 18
     VAR (269) 5
-    IDENTIFIER (270) 2 12 13 14 15 16 21
-    ASSIGNMENT (271) 21
-    LABEL (272)
-    TYPE (273)
-    ARRAY (274)
-    OF (275)
-    PROCEDURE (276)
-    FUNCTION (277)
-    GOTO (278)
-    IF (279)
-    THEN (280)
-    ELSE (281)
-    NOT (282)
-    OR (283)
-    AND (284)
-    WHILE (285)
-    DO (286)
-    INTDIV (287)
-    PLUS (288)
-    MINUS (289)
-    MULTIPLY (290)
-    DIVIDE (291)
+    IDENTIFIER (270) 2 12 13 14 15 16 22 27
+    ASSIGNMENT (271) 22
+    NUMBER (272) 26
+    LABEL (273)
+    TYPE (274)
+    ARRAY (275)
+    OF (276)
+    PROCEDURE (277)
+    FUNCTION (278)
+    GOTO (279)
+    IF (280)
+    THEN (281)
+    ELSE (282)
+    NOT (283)
+    OR (284)
+    AND (285)
+    WHILE (286)
+    DO (287)
+    INTDIV (288)
+    PLUS (289)
+    MINUS (290)
+    MULTIPLY (291)
+    DIVIDE (292)
 
 
 Nonterminals, with rules where they appear
 
-    $accept (37)
+    $accept (38)
         on left: 0
-    program (38)
+    program (39)
         on left: 2
         on right: 0
-    $@1 (39)
+    $@1 (40)
         on left: 1
         on right: 2
-    block (40)
+    block (41)
         on left: 4
         on right: 2
-    $@2 (41)
+    $@2 (42)
         on left: 3
         on right: 4
-    vars_declaration (42)
+    vars_declaration (43)
         on left: 5 6
         on right: 4
-    declare_vars (43)
+    declare_vars (44)
         on left: 7 8
         on right: 5 7
-    declare_var (44)
+    declare_var (45)
         on left: 11
         on right: 7 8
-    $@3 (45)
+    $@3 (46)
         on left: 9
         on right: 11
-    $@4 (46)
+    $@4 (47)
         on left: 10
         on right: 11
-    type (47)
+    type (48)
         on left: 12
         on right: 11
-    var_list (48)
+    var_list (49)
         on left: 13 14
         on right: 11 13
-    identifiers_list (49)
+    identifiers_list (50)
         on left: 15 16
         on right: 2 15
-    compound_command (50)
+    compound_command (51)
         on left: 18
         on right: 4
-    $@5 (51)
+    $@5 (52)
         on left: 17
         on right: 18
-    commands (52)
+    commands (53)
         on left: 19
         on right: 18
-    assignment (53)
-        on left: 21
-        on right: 19
-    $@6 (54)
-        on left: 20
-        on right: 21
-    expression (55)
+    assignment (54)
         on left: 22
-        on right: 21
+        on right: 19
+    $@6 (55)
+        on left: 20
+        on right: 22
+    $@7 (56)
+        on left: 21
+        on right: 22
+    expression (57)
+        on left: 23
+        on right: 22
+    simple_expression (58)
+        on left: 24
+        on right: 23
+    term (59)
+        on left: 25
+        on right: 24
+    factor (60)
+        on left: 26 27
+        on right: 25
 
 
 State 0
@@ -432,7 +454,7 @@ State 31
 
 State 32
 
-   21 assignment: IDENTIFIER . $@6 ASSIGNMENT expression
+   22 assignment: IDENTIFIER . $@6 ASSIGNMENT expression $@7 SEMICOLON
 
     $default  reduce using rule 20 ($@6)
 
@@ -462,7 +484,7 @@ State 35
 
 State 36
 
-   21 assignment: IDENTIFIER $@6 . ASSIGNMENT expression
+   22 assignment: IDENTIFIER $@6 . ASSIGNMENT expression $@7 SEMICOLON
 
     ASSIGNMENT  shift, and go to state 39
 
@@ -483,15 +505,70 @@ State 38
 
 State 39
 
-   21 assignment: IDENTIFIER $@6 ASSIGNMENT . expression
+   22 assignment: IDENTIFIER $@6 ASSIGNMENT . expression $@7 SEMICOLON
 
-    $default  reduce using rule 22 (expression)
+    IDENTIFIER  shift, and go to state 40
+    NUMBER      shift, and go to state 41
 
-    expression  go to state 40
+    expression         go to state 42
+    simple_expression  go to state 43
+    term               go to state 44
+    factor             go to state 45
 
 
 State 40
 
-   21 assignment: IDENTIFIER $@6 ASSIGNMENT expression .
+   27 factor: IDENTIFIER .
 
-    $default  reduce using rule 21 (assignment)
+    $default  reduce using rule 27 (factor)
+
+
+State 41
+
+   26 factor: NUMBER .
+
+    $default  reduce using rule 26 (factor)
+
+
+State 42
+
+   22 assignment: IDENTIFIER $@6 ASSIGNMENT expression . $@7 SEMICOLON
+
+    $default  reduce using rule 21 ($@7)
+
+    $@7  go to state 46
+
+
+State 43
+
+   23 expression: simple_expression .
+
+    $default  reduce using rule 23 (expression)
+
+
+State 44
+
+   24 simple_expression: term .
+
+    $default  reduce using rule 24 (simple_expression)
+
+
+State 45
+
+   25 term: factor .
+
+    $default  reduce using rule 25 (term)
+
+
+State 46
+
+   22 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 . SEMICOLON
+
+    SEMICOLON  shift, and go to state 47
+
+
+State 47
+
+   22 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 SEMICOLON .
+
+    $default  reduce using rule 22 (assignment)
