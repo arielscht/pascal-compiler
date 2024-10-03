@@ -127,8 +127,14 @@ compound_command:
                      {
                         lexical_level -= 1;
                      }
+;
 
 commands:
+                     commands command
+                     | command
+;
+
+command:             
                      assignment
 ;
 
@@ -164,11 +170,15 @@ expression:
 ;
 
 simple_expression:
-                     term
+                     simple_expression PLUS term
+                     | simple_expression MINUS term
+                     | term
 ;
 
 term: 
-                     factor
+                     term MULTIPLY factor
+                     | term DIVIDE factor
+                     | factor
 ;
 
 factor:
