@@ -56,29 +56,27 @@ Grammar
 
    18 compound_command: $@5 T_BEGIN commands T_END
 
-   19 commands: commands command
-   20         | command
+   19 commands: commands command SEMICOLON
+   20         | command SEMICOLON
 
    21 command: assignment
 
    22 $@6: %empty
 
-   23 $@7: %empty
+   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression
 
-   24 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 SEMICOLON
+   24 expression: simple_expression
 
-   25 expression: simple_expression
+   25 simple_expression: simple_expression PLUS term
+   26                  | simple_expression MINUS term
+   27                  | term
 
-   26 simple_expression: simple_expression PLUS term
-   27                  | simple_expression MINUS term
-   28                  | term
+   28 term: term MULTIPLY factor
+   29     | term DIVIDE factor
+   30     | factor
 
-   29 term: term MULTIPLY factor
-   30     | term DIVIDE factor
-   31     | factor
-
-   32 factor: NUMBER
-   33       | IDENTIFIER
+   31 factor: NUMBER
+   32       | IDENTIFIER
 
 
 Terminals, with rules where they appear
@@ -91,15 +89,15 @@ Terminals, with rules where they appear
     OPEN_BRACKETS (261)
     CLOSE_BRACKETS (262)
     COMMA (263) 13 15
-    SEMICOLON (264) 2 11 24
+    SEMICOLON (264) 2 11 19 20
     COLON (265) 11
     DOT (266) 2
     T_BEGIN (267) 18
     T_END (268) 18
     VAR (269) 5
-    IDENTIFIER (270) 2 12 13 14 15 16 24 33
-    ASSIGNMENT (271) 24
-    NUMBER (272) 32
+    IDENTIFIER (270) 2 12 13 14 15 16 23 32
+    ASSIGNMENT (271) 23
+    NUMBER (272) 31
     LABEL (273)
     TYPE (274)
     ARRAY (275)
@@ -116,10 +114,10 @@ Terminals, with rules where they appear
     WHILE (286)
     DO (287)
     INTDIV (288)
-    PLUS (289) 26
-    MINUS (290) 27
-    MULTIPLY (291) 29
-    DIVIDE (292) 30
+    PLUS (289) 25
+    MINUS (290) 26
+    MULTIPLY (291) 28
+    DIVIDE (292) 29
 
 
 Nonterminals, with rules where they appear
@@ -175,26 +173,23 @@ Nonterminals, with rules where they appear
         on left: 21
         on right: 19 20
     assignment (55)
-        on left: 24
+        on left: 23
         on right: 21
     $@6 (56)
         on left: 22
-        on right: 24
-    $@7 (57)
-        on left: 23
-        on right: 24
-    expression (58)
-        on left: 25
-        on right: 24
-    simple_expression (59)
-        on left: 26 27 28
-        on right: 25 26 27
-    term (60)
-        on left: 29 30 31
-        on right: 26 27 28 29 30
-    factor (61)
-        on left: 32 33
-        on right: 29 30 31
+        on right: 23
+    expression (57)
+        on left: 24
+        on right: 23
+    simple_expression (58)
+        on left: 25 26 27
+        on right: 24 25 26
+    term (59)
+        on left: 28 29 30
+        on right: 25 26 27 28 29
+    factor (60)
+        on left: 31 32
+        on right: 28 29 30
 
 
 State 0
@@ -461,7 +456,7 @@ State 31
 
 State 32
 
-   24 assignment: IDENTIFIER . $@6 ASSIGNMENT expression $@7 SEMICOLON
+   23 assignment: IDENTIFIER . $@6 ASSIGNMENT expression
 
     $default  reduce using rule 22 ($@6)
 
@@ -471,7 +466,7 @@ State 32
 State 33
 
    18 compound_command: $@5 T_BEGIN commands . T_END
-   19 commands: commands . command
+   19 commands: commands . command SEMICOLON
 
     T_END       shift, and go to state 38
     IDENTIFIER  shift, and go to state 32
@@ -482,9 +477,9 @@ State 33
 
 State 34
 
-   20 commands: command .
+   20 commands: command . SEMICOLON
 
-    $default  reduce using rule 20 (commands)
+    SEMICOLON  shift, and go to state 40
 
 
 State 35
@@ -498,14 +493,14 @@ State 36
 
    11 declare_var: $@3 var_list COLON type $@4 . SEMICOLON
 
-    SEMICOLON  shift, and go to state 40
+    SEMICOLON  shift, and go to state 41
 
 
 State 37
 
-   24 assignment: IDENTIFIER $@6 . ASSIGNMENT expression $@7 SEMICOLON
+   23 assignment: IDENTIFIER $@6 . ASSIGNMENT expression
 
-    ASSIGNMENT  shift, and go to state 41
+    ASSIGNMENT  shift, and go to state 42
 
 
 State 38
@@ -517,174 +512,172 @@ State 38
 
 State 39
 
-   19 commands: commands command .
+   19 commands: commands command . SEMICOLON
 
-    $default  reduce using rule 19 (commands)
+    SEMICOLON  shift, and go to state 43
 
 
 State 40
+
+   20 commands: command SEMICOLON .
+
+    $default  reduce using rule 20 (commands)
+
+
+State 41
 
    11 declare_var: $@3 var_list COLON type $@4 SEMICOLON .
 
     $default  reduce using rule 11 (declare_var)
 
 
-State 41
-
-   24 assignment: IDENTIFIER $@6 ASSIGNMENT . expression $@7 SEMICOLON
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    expression         go to state 44
-    simple_expression  go to state 45
-    term               go to state 46
-    factor             go to state 47
-
-
 State 42
 
-   33 factor: IDENTIFIER .
+   23 assignment: IDENTIFIER $@6 ASSIGNMENT . expression
 
-    $default  reduce using rule 33 (factor)
+    IDENTIFIER  shift, and go to state 44
+    NUMBER      shift, and go to state 45
+
+    expression         go to state 46
+    simple_expression  go to state 47
+    term               go to state 48
+    factor             go to state 49
 
 
 State 43
 
-   32 factor: NUMBER .
+   19 commands: commands command SEMICOLON .
 
-    $default  reduce using rule 32 (factor)
+    $default  reduce using rule 19 (commands)
 
 
 State 44
 
-   24 assignment: IDENTIFIER $@6 ASSIGNMENT expression . $@7 SEMICOLON
+   32 factor: IDENTIFIER .
 
-    $default  reduce using rule 23 ($@7)
-
-    $@7  go to state 48
+    $default  reduce using rule 32 (factor)
 
 
 State 45
 
-   25 expression: simple_expression .
-   26 simple_expression: simple_expression . PLUS term
-   27                  | simple_expression . MINUS term
+   31 factor: NUMBER .
 
-    PLUS   shift, and go to state 49
-    MINUS  shift, and go to state 50
-
-    $default  reduce using rule 25 (expression)
+    $default  reduce using rule 31 (factor)
 
 
 State 46
 
-   28 simple_expression: term .
-   29 term: term . MULTIPLY factor
-   30     | term . DIVIDE factor
+   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression .
 
-    MULTIPLY  shift, and go to state 51
-    DIVIDE    shift, and go to state 52
-
-    $default  reduce using rule 28 (simple_expression)
+    $default  reduce using rule 23 (assignment)
 
 
 State 47
 
-   31 term: factor .
+   24 expression: simple_expression .
+   25 simple_expression: simple_expression . PLUS term
+   26                  | simple_expression . MINUS term
 
-    $default  reduce using rule 31 (term)
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
+
+    $default  reduce using rule 24 (expression)
 
 
 State 48
 
-   24 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 . SEMICOLON
+   27 simple_expression: term .
+   28 term: term . MULTIPLY factor
+   29     | term . DIVIDE factor
 
-    SEMICOLON  shift, and go to state 53
-
-
-State 49
-
-   26 simple_expression: simple_expression PLUS . term
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    term    go to state 54
-    factor  go to state 47
-
-
-State 50
-
-   27 simple_expression: simple_expression MINUS . term
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    term    go to state 55
-    factor  go to state 47
-
-
-State 51
-
-   29 term: term MULTIPLY . factor
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    factor  go to state 56
-
-
-State 52
-
-   30 term: term DIVIDE . factor
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    factor  go to state 57
-
-
-State 53
-
-   24 assignment: IDENTIFIER $@6 ASSIGNMENT expression $@7 SEMICOLON .
-
-    $default  reduce using rule 24 (assignment)
-
-
-State 54
-
-   26 simple_expression: simple_expression PLUS term .
-   29 term: term . MULTIPLY factor
-   30     | term . DIVIDE factor
-
-    MULTIPLY  shift, and go to state 51
-    DIVIDE    shift, and go to state 52
-
-    $default  reduce using rule 26 (simple_expression)
-
-
-State 55
-
-   27 simple_expression: simple_expression MINUS term .
-   29 term: term . MULTIPLY factor
-   30     | term . DIVIDE factor
-
-    MULTIPLY  shift, and go to state 51
-    DIVIDE    shift, and go to state 52
+    MULTIPLY  shift, and go to state 52
+    DIVIDE    shift, and go to state 53
 
     $default  reduce using rule 27 (simple_expression)
 
 
+State 49
+
+   30 term: factor .
+
+    $default  reduce using rule 30 (term)
+
+
+State 50
+
+   25 simple_expression: simple_expression PLUS . term
+
+    IDENTIFIER  shift, and go to state 44
+    NUMBER      shift, and go to state 45
+
+    term    go to state 54
+    factor  go to state 49
+
+
+State 51
+
+   26 simple_expression: simple_expression MINUS . term
+
+    IDENTIFIER  shift, and go to state 44
+    NUMBER      shift, and go to state 45
+
+    term    go to state 55
+    factor  go to state 49
+
+
+State 52
+
+   28 term: term MULTIPLY . factor
+
+    IDENTIFIER  shift, and go to state 44
+    NUMBER      shift, and go to state 45
+
+    factor  go to state 56
+
+
+State 53
+
+   29 term: term DIVIDE . factor
+
+    IDENTIFIER  shift, and go to state 44
+    NUMBER      shift, and go to state 45
+
+    factor  go to state 57
+
+
+State 54
+
+   25 simple_expression: simple_expression PLUS term .
+   28 term: term . MULTIPLY factor
+   29     | term . DIVIDE factor
+
+    MULTIPLY  shift, and go to state 52
+    DIVIDE    shift, and go to state 53
+
+    $default  reduce using rule 25 (simple_expression)
+
+
+State 55
+
+   26 simple_expression: simple_expression MINUS term .
+   28 term: term . MULTIPLY factor
+   29     | term . DIVIDE factor
+
+    MULTIPLY  shift, and go to state 52
+    DIVIDE    shift, and go to state 53
+
+    $default  reduce using rule 26 (simple_expression)
+
+
 State 56
 
-   29 term: term MULTIPLY factor .
+   28 term: term MULTIPLY factor .
 
-    $default  reduce using rule 29 (term)
+    $default  reduce using rule 28 (term)
 
 
 State 57
 
-   30 term: term DIVIDE factor .
+   29 term: term DIVIDE factor .
 
-    $default  reduce using rule 30 (term)
+    $default  reduce using rule 29 (term)

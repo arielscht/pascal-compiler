@@ -130,8 +130,8 @@ compound_command:
 ;
 
 commands:
-                     commands command
-                     | command
+                     commands command SEMICOLON
+                     | command SEMICOLON
 ;
 
 command:             
@@ -162,7 +162,6 @@ assignment:
                         sprintf(buffer, "AMRZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
                         generate_code(NULL, buffer);
                      }
-                     SEMICOLON
 ;
 
 expression:
