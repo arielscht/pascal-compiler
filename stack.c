@@ -65,23 +65,26 @@ int stack_push(stack_t **stack, stack_elem_t *elem)
     return 0;
 }
 
-int stack_pop(stack_t **stack)
+stack_elem_t *stack_pop(stack_t **stack)
 {
+    stack_elem_t *top;
+
     if (stack == NULL)
     {
         fprintf(stderr, "The stack does not exist.\n");
-        return -1;
+        return NULL;
     }
     if ((*stack)->top == NULL)
     {
         fprintf(stderr, "The stack is empty.\n");
-        return -2;
+        return NULL;
     }
 
+    top = (*stack)->top;
     (*stack)->top = (*stack)->top->prev;
     (*stack)->size -= 1;
 
-    return 0;
+    return top;
 }
 
 stack_elem_t *stack_search(stack_t *stack, int check_elem(void *))

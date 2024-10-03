@@ -62,6 +62,13 @@ typedef struct symbol_entry
   var_type type;
 } symbol_entry;
 
+typedef struct exp_entry
+{
+  struct exp_entry *prev;
+  struct exp_entry *next;
+  var_type type;
+} exp_entry;
+
 /* -------------------------------------------------------------------
  * global variables
  * ------------------------------------------------------------------- */

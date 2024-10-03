@@ -23,7 +23,7 @@ void stack_print(char *name, stack_t *stack, void print_elem(void *));
 
 int stack_push(stack_t **stack, stack_elem_t *elem);
 
-int stack_pop(stack_t **stack);
+stack_elem_t *stack_pop(stack_t **stack);
 
 stack_elem_t *stack_search(stack_t *stack, int check_elem(void *));
 

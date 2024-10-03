@@ -17,13 +17,18 @@
 int num_vars = 0;
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
+stack_t *exp_stack;
 
-void print_elem(void *ptr);
+void print_symbol(void *ptr);
+void print_exp_entry(void *ptr);
 void add_symbol(symbol_category category, var_type type, char *identifier);
 int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
 symbol_entry *search_var(char *identifier);
+int check_exp_type(var_type type);
+void add_exp_entry(var_type type);
+
 char *symbol_to_find;
 symbol_entry *var_to_assign;
 
@@ -84,14 +89,14 @@ declare_var:
 type: 
                      IDENTIFIER
                      {
-                        stack_print("Table of symbols\n", symbol_table, print_elem);
+                        stack_print("Table of symbols\n", symbol_table, print_symbol);
                         printf("identifier: %s\n", token);
                         if(strcmp(token, "integer") == 0) {
                            set_var_types(INTEGER);
-                           stack_print("Table of symbols\n", symbol_table, print_elem);
+                           stack_print("Table of symbols\n", symbol_table, print_symbol);
                         } else if(strcmp(token, "boolean") == 0) {
                            set_var_types(BOOLEAN);
-                           stack_print("Table of symbols\n", symbol_table, print_elem);
+                           stack_print("Table of symbols\n", symbol_table, print_symbol);
                         } else {
                            sprintf(buffer, "Unknown type %s", token);
                            print_error(buffer);
@@ -150,6 +155,13 @@ assignment:
                      {
                         sprintf(buffer, "AMRZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
                         generate_code(NULL, buffer);
+                        exp_entry *entry;
+                        entry = (exp_entry *)stack_pop(&exp_stack);
+                        if(entry->type != var_to_assign->type) {
+                           free(entry);
+                           print_error("Type mismatch.");
+                        }
+                        free(entry);
                      }
 ;
 
@@ -159,26 +171,82 @@ expression:
 
 simple_expression:
                      simple_expression PLUS term
+                     {
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        check_exp_type(INTEGER);
+                        add_exp_entry(INTEGER);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        generate_code(NULL, "SOMA");
+                     }
                      | simple_expression MINUS term
+                     {
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        check_exp_type(INTEGER);
+                        add_exp_entry(INTEGER);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        generate_code(NULL, "SUBT");
+                     }
                      | term
 ;
 
 term: 
                      term MULTIPLY factor
+                     {
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        check_exp_type(INTEGER);
+                        add_exp_entry(INTEGER);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        generate_code(NULL, "MULT");
+                     }
                      | term DIVIDE factor
+                     {
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        check_exp_type(INTEGER);
+                        add_exp_entry(INTEGER);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        generate_code(NULL, "DIVI");
+                     }
                      | factor
 ;
 
 factor:
                      NUMBER
                      {
+                        add_exp_entry(INTEGER);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         sprintf(buffer, "CRCT %s", token);
                         generate_code(NULL, buffer);
                      }
                      | IDENTIFIER
+                     {
+                        symbol_entry *symbol;
+                        symbol = search_var(token);
+                        add_exp_entry(symbol->type);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                        generate_code(NULL, buffer);
+                     }
 ;
 
 %%
+
+int check_exp_type(var_type type) {
+   exp_entry *left_exp, *right_exp;
+
+   left_exp = (exp_entry *)stack_pop(&exp_stack);
+   right_exp = (exp_entry *)stack_pop(&exp_stack);
+
+   if(left_exp->type != type 
+      || right_exp->type != type
+      || (left_exp->type != right_exp->type)) {
+      free(left_exp);
+      free(right_exp);
+      print_error("Type mysmatch.");
+   }
+
+   free(left_exp);
+   free(right_exp);
+}
 
 symbol_entry *search_symbol(char *identifier) {
    symbol_entry *symbol;
@@ -246,6 +314,13 @@ int set_var_types(var_type type) {
    return 0;
 }
 
+void add_exp_entry(var_type type) 
+{
+   exp_entry *entry = malloc(sizeof(exp_entry));
+   entry->type = type;
+   stack_push(&exp_stack, (stack_elem_t *)entry);
+}
+
 void add_symbol(symbol_category category, var_type type, char *identifier) {
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->category = category;
@@ -256,7 +331,7 @@ void add_symbol(symbol_category category, var_type type, char *identifier) {
    stack_push(&symbol_table, (stack_elem_t *)symbol);
 }
 
-void print_elem(void *ptr)
+void print_symbol(void *ptr)
 {
     symbol_entry *elem = ptr;
 
@@ -264,6 +339,17 @@ void print_elem(void *ptr)
         return;
 
    printf("id: %s, c: %d, t: %d, ll: %d, o: %d\n", elem->identifier, elem->category, elem->type, elem->lexical_level, elem->offset);
+}
+
+void print_exp_entry(void *ptr) 
+{
+   exp_entry *elem = ptr;
+
+   if(!elem) {
+      return;
+   }
+
+   printf("type: %d\n", elem->type);
 }
 
 int main (int argc, char** argv) {
@@ -286,6 +372,7 @@ int main (int argc, char** argv) {
  *  Start symbols table
  * ------------------------------------------------------------------- */
    symbol_table = malloc(sizeof(stack_t));
+   exp_stack = malloc(sizeof(stack_t));
    lexical_level = 0;
    offset = 0;
 
@@ -294,6 +381,7 @@ int main (int argc, char** argv) {
    yyparse();
 
    free(symbol_table);
+   free(exp_stack);
 
    return 0;
 }
