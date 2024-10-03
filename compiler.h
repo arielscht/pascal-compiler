@@ -77,5 +77,6 @@ extern int num_lines;
  * ------------------------------------------------------------------- */
 
 void generate_code(char *, char *);
+int print_error(char *error);
 int yylex();
 void yyerror(char *s);

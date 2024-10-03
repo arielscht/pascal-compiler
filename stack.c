@@ -25,7 +25,6 @@ void stack_print(char *name, stack_t *stack, void print_elem(void *))
     do
     {
         print_elem(cur_element);
-        printf(" ");
         cur_element = cur_element->prev;
     } while (cur_element != NULL);
 

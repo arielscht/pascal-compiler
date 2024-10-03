@@ -23,6 +23,7 @@ void add_symbol(symbol_category category, var_type type, char *identifier);
 int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
+symbol_entry *search_var(char *identifier);
 char *symbol_to_find;
 symbol_entry *var_to_assign;
 
@@ -93,7 +94,7 @@ type:
                            stack_print("Table of symbols\n", symbol_table, print_elem);
                         } else {
                            sprintf(buffer, "Unknown type %s", token);
-                           yyerror(buffer);
+                           print_error(buffer);
                         }
                      }
 ;
@@ -142,20 +143,8 @@ assignment:
                      IDENTIFIER
                      {
                         symbol_entry *symbol;
-                        symbol_to_find = token;
-                        symbol = (symbol_entry *)stack_search(symbol_table, check_symbol);
-
-                        if(symbol == NULL) {
-                           sprintf(buffer, "%s is not defined.", token);
-                           yyerror(buffer);
-                        } else {
-                           if(symbol->category != SIMPLE_VAR) {
-                              sprintf(buffer, "%s is not a simple var.", token);
-                              yyerror(buffer);
-                           } else {
-                              var_to_assign = symbol;
-                           }
-                        }
+                        symbol = search_var(token);
+                        var_to_assign = symbol;
                      }
                      ASSIGNMENT expression 
                      {
@@ -190,6 +179,31 @@ factor:
 ;
 
 %%
+
+symbol_entry *search_symbol(char *identifier) {
+   symbol_entry *symbol;
+   symbol_to_find = token;
+   symbol = (symbol_entry *)stack_search(symbol_table, check_symbol);
+
+   if(symbol == NULL) {
+      sprintf(buffer, "%s is not defined.", token);
+      print_error(buffer);
+   }
+
+   return symbol;
+}
+
+symbol_entry *search_var(char *identifier) {
+   symbol_entry *symbol;
+   symbol = search_symbol(identifier);
+
+   if(symbol && symbol->category != SIMPLE_VAR) {
+      sprintf(buffer, "%s is not a simple var.", token);
+      print_error(buffer);
+   };
+
+   return symbol;
+}
 
 int check_symbol(void *ptr) {
    symbol_entry *elem = ptr;

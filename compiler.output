@@ -1,4 +1,4 @@
-Terminals unused in grammar
+Terminais sem uso na gramática
 
     OPEN_BRACKETS
     CLOSE_BRACKETS
@@ -20,27 +20,27 @@ Terminals unused in grammar
     INTDIV
 
 
-Grammar
+Gramática
 
     0 $accept: program $end
 
-    1 $@1: %empty
+    1 $@1: ε
 
     2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
 
-    3 $@2: %empty
+    3 $@2: ε
 
     4 block: vars_declaration $@2 compound_command
 
     5 vars_declaration: VAR declare_vars
-    6                 | %empty
+    6                 | ε
 
     7 declare_vars: declare_vars declare_var
     8             | declare_var
 
-    9 $@3: %empty
+    9 $@3: ε
 
-   10 $@4: %empty
+   10 $@4: ε
 
    11 declare_var: $@3 var_list COLON type $@4 SEMICOLON
 
@@ -52,7 +52,7 @@ Grammar
    15 identifiers_list: identifiers_list COMMA IDENTIFIER
    16                 | IDENTIFIER
 
-   17 $@5: %empty
+   17 $@5: ε
 
    18 compound_command: $@5 T_BEGIN commands T_END
 
@@ -61,7 +61,7 @@ Grammar
 
    21 command: assignment
 
-   22 $@6: %empty
+   22 $@6: ε
 
    23 assignment: IDENTIFIER $@6 ASSIGNMENT expression
 
@@ -79,7 +79,7 @@ Grammar
    32       | IDENTIFIER
 
 
-Terminals, with rules where they appear
+Terminais, com as regras onde eles aparecem
 
     $end (0) 0
     error (256)
@@ -120,564 +120,564 @@ Terminals, with rules where they appear
     DIVIDE (292) 29
 
 
-Nonterminals, with rules where they appear
+Não terminais com as regras onde eles aparecem
 
     $accept (38)
-        on left: 0
+        à esquerda: 0
     program (39)
-        on left: 2
-        on right: 0
+        à esquerda: 2
+        à direita: 0
     $@1 (40)
-        on left: 1
-        on right: 2
+        à esquerda: 1
+        à direita: 2
     block (41)
-        on left: 4
-        on right: 2
+        à esquerda: 4
+        à direita: 2
     $@2 (42)
-        on left: 3
-        on right: 4
+        à esquerda: 3
+        à direita: 4
     vars_declaration (43)
-        on left: 5 6
-        on right: 4
+        à esquerda: 5 6
+        à direita: 4
     declare_vars (44)
-        on left: 7 8
-        on right: 5 7
+        à esquerda: 7 8
+        à direita: 5 7
     declare_var (45)
-        on left: 11
-        on right: 7 8
+        à esquerda: 11
+        à direita: 7 8
     $@3 (46)
-        on left: 9
-        on right: 11
+        à esquerda: 9
+        à direita: 11
     $@4 (47)
-        on left: 10
-        on right: 11
+        à esquerda: 10
+        à direita: 11
     type (48)
-        on left: 12
-        on right: 11
+        à esquerda: 12
+        à direita: 11
     var_list (49)
-        on left: 13 14
-        on right: 11 13
+        à esquerda: 13 14
+        à direita: 11 13
     identifiers_list (50)
-        on left: 15 16
-        on right: 2 15
+        à esquerda: 15 16
+        à direita: 2 15
     compound_command (51)
-        on left: 18
-        on right: 4
+        à esquerda: 18
+        à direita: 4
     $@5 (52)
-        on left: 17
-        on right: 18
+        à esquerda: 17
+        à direita: 18
     commands (53)
-        on left: 19 20
-        on right: 18 19
+        à esquerda: 19 20
+        à direita: 18 19
     command (54)
-        on left: 21
-        on right: 19 20
+        à esquerda: 21
+        à direita: 19 20
     assignment (55)
-        on left: 23
-        on right: 21
+        à esquerda: 23
+        à direita: 21
     $@6 (56)
-        on left: 22
-        on right: 23
+        à esquerda: 22
+        à direita: 23
     expression (57)
-        on left: 24
-        on right: 23
+        à esquerda: 24
+        à direita: 23
     simple_expression (58)
-        on left: 25 26 27
-        on right: 24 25 26
+        à esquerda: 25 26 27
+        à direita: 24 25 26
     term (59)
-        on left: 28 29 30
-        on right: 25 26 27 28 29
+        à esquerda: 28 29 30
+        à direita: 25 26 27 28 29
     factor (60)
-        on left: 31 32
-        on right: 28 29 30
+        à esquerda: 31 32
+        à direita: 28 29 30
 
 
-State 0
+Estado 0
 
-    0 $accept: . program $end
+    0 $accept: • program $end
 
-    $default  reduce using rule 1 ($@1)
+    $padrão  reduzir usando a regra 1 ($@1)
 
-    program  go to state 1
-    $@1      go to state 2
+    program  ir ao estado 1
+    $@1      ir ao estado 2
 
 
-State 1
+Estado 1
 
-    0 $accept: program . $end
+    0 $accept: program • $end
 
-    $end  shift, and go to state 3
+    $end  deslocar, e ir ao estado 3
 
 
-State 2
+Estado 2
 
-    2 program: $@1 . PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
+    2 program: $@1 • PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
 
-    PROGRAM  shift, and go to state 4
+    PROGRAM  deslocar, e ir ao estado 4
 
 
-State 3
+Estado 3
 
-    0 $accept: program $end .
+    0 $accept: program $end •
 
-    $default  accept
+    $padrão  aceitar
 
 
-State 4
+Estado 4
 
-    2 program: $@1 PROGRAM . IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
+    2 program: $@1 PROGRAM • IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
 
-    IDENTIFIER  shift, and go to state 5
+    IDENTIFIER  deslocar, e ir ao estado 5
 
 
-State 5
+Estado 5
 
-    2 program: $@1 PROGRAM IDENTIFIER . OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
+    2 program: $@1 PROGRAM IDENTIFIER • OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
 
-    OPEN_PARENTHESIS  shift, and go to state 6
+    OPEN_PARENTHESIS  deslocar, e ir ao estado 6
 
 
-State 6
+Estado 6
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS . identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS • identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT
 
-    IDENTIFIER  shift, and go to state 7
+    IDENTIFIER  deslocar, e ir ao estado 7
 
-    identifiers_list  go to state 8
+    identifiers_list  ir ao estado 8
 
 
-State 7
+Estado 7
 
-   16 identifiers_list: IDENTIFIER .
+   16 identifiers_list: IDENTIFIER •
 
-    $default  reduce using rule 16 (identifiers_list)
+    $padrão  reduzir usando a regra 16 (identifiers_list)
 
 
-State 8
+Estado 8
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list . CLOSE_PARENTHESIS SEMICOLON block DOT
-   15 identifiers_list: identifiers_list . COMMA IDENTIFIER
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list • CLOSE_PARENTHESIS SEMICOLON block DOT
+   15 identifiers_list: identifiers_list • COMMA IDENTIFIER
 
-    CLOSE_PARENTHESIS  shift, and go to state 9
-    COMMA              shift, and go to state 10
+    CLOSE_PARENTHESIS  deslocar, e ir ao estado 9
+    COMMA              deslocar, e ir ao estado 10
 
 
-State 9
+Estado 9
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS . SEMICOLON block DOT
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS • SEMICOLON block DOT
 
-    SEMICOLON  shift, and go to state 11
+    SEMICOLON  deslocar, e ir ao estado 11
 
 
-State 10
+Estado 10
 
-   15 identifiers_list: identifiers_list COMMA . IDENTIFIER
+   15 identifiers_list: identifiers_list COMMA • IDENTIFIER
 
-    IDENTIFIER  shift, and go to state 12
+    IDENTIFIER  deslocar, e ir ao estado 12
 
 
-State 11
+Estado 11
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON . block DOT
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON • block DOT
 
-    VAR  shift, and go to state 13
+    VAR  deslocar, e ir ao estado 13
 
-    $default  reduce using rule 6 (vars_declaration)
+    $padrão  reduzir usando a regra 6 (vars_declaration)
 
-    block             go to state 14
-    vars_declaration  go to state 15
+    block             ir ao estado 14
+    vars_declaration  ir ao estado 15
 
 
-State 12
+Estado 12
 
-   15 identifiers_list: identifiers_list COMMA IDENTIFIER .
+   15 identifiers_list: identifiers_list COMMA IDENTIFIER •
 
-    $default  reduce using rule 15 (identifiers_list)
+    $padrão  reduzir usando a regra 15 (identifiers_list)
 
 
-State 13
+Estado 13
 
-    5 vars_declaration: VAR . declare_vars
+    5 vars_declaration: VAR • declare_vars
 
-    $default  reduce using rule 9 ($@3)
+    $padrão  reduzir usando a regra 9 ($@3)
 
-    declare_vars  go to state 16
-    declare_var   go to state 17
-    $@3           go to state 18
+    declare_vars  ir ao estado 16
+    declare_var   ir ao estado 17
+    $@3           ir ao estado 18
 
 
-State 14
+Estado 14
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block . DOT
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block • DOT
 
-    DOT  shift, and go to state 19
+    DOT  deslocar, e ir ao estado 19
 
 
-State 15
+Estado 15
 
-    4 block: vars_declaration . $@2 compound_command
+    4 block: vars_declaration • $@2 compound_command
 
-    $default  reduce using rule 3 ($@2)
+    $padrão  reduzir usando a regra 3 ($@2)
 
-    $@2  go to state 20
+    $@2  ir ao estado 20
 
 
-State 16
+Estado 16
 
-    5 vars_declaration: VAR declare_vars .
-    7 declare_vars: declare_vars . declare_var
+    5 vars_declaration: VAR declare_vars •
+    7 declare_vars: declare_vars • declare_var
 
-    IDENTIFIER  reduce using rule 9 ($@3)
-    $default    reduce using rule 5 (vars_declaration)
+    IDENTIFIER  reduzir usando a regra 9 ($@3)
+    $padrão     reduzir usando a regra 5 (vars_declaration)
 
-    declare_var  go to state 21
-    $@3          go to state 18
+    declare_var  ir ao estado 21
+    $@3          ir ao estado 18
 
 
-State 17
+Estado 17
 
-    8 declare_vars: declare_var .
+    8 declare_vars: declare_var •
 
-    $default  reduce using rule 8 (declare_vars)
+    $padrão  reduzir usando a regra 8 (declare_vars)
 
 
-State 18
+Estado 18
 
-   11 declare_var: $@3 . var_list COLON type $@4 SEMICOLON
+   11 declare_var: $@3 • var_list COLON type $@4 SEMICOLON
 
-    IDENTIFIER  shift, and go to state 22
+    IDENTIFIER  deslocar, e ir ao estado 22
 
-    var_list  go to state 23
+    var_list  ir ao estado 23
 
 
-State 19
+Estado 19
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT .
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT •
 
-    $default  reduce using rule 2 (program)
+    $padrão  reduzir usando a regra 2 (program)
 
 
-State 20
+Estado 20
 
-    4 block: vars_declaration $@2 . compound_command
+    4 block: vars_declaration $@2 • compound_command
 
-    $default  reduce using rule 17 ($@5)
+    $padrão  reduzir usando a regra 17 ($@5)
 
-    compound_command  go to state 24
-    $@5               go to state 25
+    compound_command  ir ao estado 24
+    $@5               ir ao estado 25
 
 
-State 21
+Estado 21
 
-    7 declare_vars: declare_vars declare_var .
+    7 declare_vars: declare_vars declare_var •
 
-    $default  reduce using rule 7 (declare_vars)
+    $padrão  reduzir usando a regra 7 (declare_vars)
 
 
-State 22
+Estado 22
 
-   14 var_list: IDENTIFIER .
+   14 var_list: IDENTIFIER •
 
-    $default  reduce using rule 14 (var_list)
+    $padrão  reduzir usando a regra 14 (var_list)
 
 
-State 23
+Estado 23
 
-   11 declare_var: $@3 var_list . COLON type $@4 SEMICOLON
-   13 var_list: var_list . COMMA IDENTIFIER
+   11 declare_var: $@3 var_list • COLON type $@4 SEMICOLON
+   13 var_list: var_list • COMMA IDENTIFIER
 
-    COMMA  shift, and go to state 26
-    COLON  shift, and go to state 27
+    COMMA  deslocar, e ir ao estado 26
+    COLON  deslocar, e ir ao estado 27
 
 
-State 24
+Estado 24
 
-    4 block: vars_declaration $@2 compound_command .
+    4 block: vars_declaration $@2 compound_command •
 
-    $default  reduce using rule 4 (block)
+    $padrão  reduzir usando a regra 4 (block)
 
 
-State 25
+Estado 25
 
-   18 compound_command: $@5 . T_BEGIN commands T_END
+   18 compound_command: $@5 • T_BEGIN commands T_END
 
-    T_BEGIN  shift, and go to state 28
+    T_BEGIN  deslocar, e ir ao estado 28
 
 
-State 26
+Estado 26
 
-   13 var_list: var_list COMMA . IDENTIFIER
+   13 var_list: var_list COMMA • IDENTIFIER
 
-    IDENTIFIER  shift, and go to state 29
+    IDENTIFIER  deslocar, e ir ao estado 29
 
 
-State 27
+Estado 27
 
-   11 declare_var: $@3 var_list COLON . type $@4 SEMICOLON
+   11 declare_var: $@3 var_list COLON • type $@4 SEMICOLON
 
-    IDENTIFIER  shift, and go to state 30
+    IDENTIFIER  deslocar, e ir ao estado 30
 
-    type  go to state 31
+    type  ir ao estado 31
 
 
-State 28
+Estado 28
 
-   18 compound_command: $@5 T_BEGIN . commands T_END
+   18 compound_command: $@5 T_BEGIN • commands T_END
 
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  deslocar, e ir ao estado 32
 
-    commands    go to state 33
-    command     go to state 34
-    assignment  go to state 35
+    commands    ir ao estado 33
+    command     ir ao estado 34
+    assignment  ir ao estado 35
 
 
-State 29
+Estado 29
 
-   13 var_list: var_list COMMA IDENTIFIER .
+   13 var_list: var_list COMMA IDENTIFIER •
 
-    $default  reduce using rule 13 (var_list)
+    $padrão  reduzir usando a regra 13 (var_list)
 
 
-State 30
+Estado 30
 
-   12 type: IDENTIFIER .
+   12 type: IDENTIFIER •
 
-    $default  reduce using rule 12 (type)
+    $padrão  reduzir usando a regra 12 (type)
 
 
-State 31
+Estado 31
 
-   11 declare_var: $@3 var_list COLON type . $@4 SEMICOLON
+   11 declare_var: $@3 var_list COLON type • $@4 SEMICOLON
 
-    $default  reduce using rule 10 ($@4)
+    $padrão  reduzir usando a regra 10 ($@4)
 
-    $@4  go to state 36
+    $@4  ir ao estado 36
 
 
-State 32
+Estado 32
 
-   23 assignment: IDENTIFIER . $@6 ASSIGNMENT expression
+   23 assignment: IDENTIFIER • $@6 ASSIGNMENT expression
 
-    $default  reduce using rule 22 ($@6)
+    $padrão  reduzir usando a regra 22 ($@6)
 
-    $@6  go to state 37
+    $@6  ir ao estado 37
 
 
-State 33
+Estado 33
 
-   18 compound_command: $@5 T_BEGIN commands . T_END
-   19 commands: commands . command SEMICOLON
+   18 compound_command: $@5 T_BEGIN commands • T_END
+   19 commands: commands • command SEMICOLON
 
-    T_END       shift, and go to state 38
-    IDENTIFIER  shift, and go to state 32
+    T_END       deslocar, e ir ao estado 38
+    IDENTIFIER  deslocar, e ir ao estado 32
 
-    command     go to state 39
-    assignment  go to state 35
+    command     ir ao estado 39
+    assignment  ir ao estado 35
 
 
-State 34
+Estado 34
 
-   20 commands: command . SEMICOLON
+   20 commands: command • SEMICOLON
 
-    SEMICOLON  shift, and go to state 40
+    SEMICOLON  deslocar, e ir ao estado 40
 
 
-State 35
+Estado 35
 
-   21 command: assignment .
+   21 command: assignment •
 
-    $default  reduce using rule 21 (command)
+    $padrão  reduzir usando a regra 21 (command)
 
 
-State 36
+Estado 36
 
-   11 declare_var: $@3 var_list COLON type $@4 . SEMICOLON
+   11 declare_var: $@3 var_list COLON type $@4 • SEMICOLON
 
-    SEMICOLON  shift, and go to state 41
+    SEMICOLON  deslocar, e ir ao estado 41
 
 
-State 37
+Estado 37
 
-   23 assignment: IDENTIFIER $@6 . ASSIGNMENT expression
+   23 assignment: IDENTIFIER $@6 • ASSIGNMENT expression
 
-    ASSIGNMENT  shift, and go to state 42
+    ASSIGNMENT  deslocar, e ir ao estado 42
 
 
-State 38
+Estado 38
 
-   18 compound_command: $@5 T_BEGIN commands T_END .
+   18 compound_command: $@5 T_BEGIN commands T_END •
 
-    $default  reduce using rule 18 (compound_command)
+    $padrão  reduzir usando a regra 18 (compound_command)
 
 
-State 39
+Estado 39
 
-   19 commands: commands command . SEMICOLON
+   19 commands: commands command • SEMICOLON
 
-    SEMICOLON  shift, and go to state 43
+    SEMICOLON  deslocar, e ir ao estado 43
 
 
-State 40
+Estado 40
 
-   20 commands: command SEMICOLON .
+   20 commands: command SEMICOLON •
 
-    $default  reduce using rule 20 (commands)
+    $padrão  reduzir usando a regra 20 (commands)
 
 
-State 41
+Estado 41
 
-   11 declare_var: $@3 var_list COLON type $@4 SEMICOLON .
+   11 declare_var: $@3 var_list COLON type $@4 SEMICOLON •
 
-    $default  reduce using rule 11 (declare_var)
+    $padrão  reduzir usando a regra 11 (declare_var)
 
 
-State 42
+Estado 42
 
-   23 assignment: IDENTIFIER $@6 ASSIGNMENT . expression
+   23 assignment: IDENTIFIER $@6 ASSIGNMENT • expression
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
+    IDENTIFIER  deslocar, e ir ao estado 44
+    NUMBER      deslocar, e ir ao estado 45
 
-    expression         go to state 46
-    simple_expression  go to state 47
-    term               go to state 48
-    factor             go to state 49
+    expression         ir ao estado 46
+    simple_expression  ir ao estado 47
+    term               ir ao estado 48
+    factor             ir ao estado 49
 
 
-State 43
+Estado 43
 
-   19 commands: commands command SEMICOLON .
+   19 commands: commands command SEMICOLON •
 
-    $default  reduce using rule 19 (commands)
+    $padrão  reduzir usando a regra 19 (commands)
 
 
-State 44
+Estado 44
 
-   32 factor: IDENTIFIER .
+   32 factor: IDENTIFIER •
 
-    $default  reduce using rule 32 (factor)
+    $padrão  reduzir usando a regra 32 (factor)
 
 
-State 45
+Estado 45
 
-   31 factor: NUMBER .
+   31 factor: NUMBER •
 
-    $default  reduce using rule 31 (factor)
+    $padrão  reduzir usando a regra 31 (factor)
 
 
-State 46
+Estado 46
 
-   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression .
+   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression •
 
-    $default  reduce using rule 23 (assignment)
+    $padrão  reduzir usando a regra 23 (assignment)
 
 
-State 47
+Estado 47
 
-   24 expression: simple_expression .
-   25 simple_expression: simple_expression . PLUS term
-   26                  | simple_expression . MINUS term
+   24 expression: simple_expression •
+   25 simple_expression: simple_expression • PLUS term
+   26                  | simple_expression • MINUS term
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
+    PLUS   deslocar, e ir ao estado 50
+    MINUS  deslocar, e ir ao estado 51
 
-    $default  reduce using rule 24 (expression)
+    $padrão  reduzir usando a regra 24 (expression)
 
 
-State 48
+Estado 48
 
-   27 simple_expression: term .
-   28 term: term . MULTIPLY factor
-   29     | term . DIVIDE factor
+   27 simple_expression: term •
+   28 term: term • MULTIPLY factor
+   29     | term • DIVIDE factor
 
-    MULTIPLY  shift, and go to state 52
-    DIVIDE    shift, and go to state 53
+    MULTIPLY  deslocar, e ir ao estado 52
+    DIVIDE    deslocar, e ir ao estado 53
 
-    $default  reduce using rule 27 (simple_expression)
+    $padrão  reduzir usando a regra 27 (simple_expression)
 
 
-State 49
+Estado 49
 
-   30 term: factor .
+   30 term: factor •
 
-    $default  reduce using rule 30 (term)
+    $padrão  reduzir usando a regra 30 (term)
 
 
-State 50
+Estado 50
 
-   25 simple_expression: simple_expression PLUS . term
+   25 simple_expression: simple_expression PLUS • term
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
+    IDENTIFIER  deslocar, e ir ao estado 44
+    NUMBER      deslocar, e ir ao estado 45
 
-    term    go to state 54
-    factor  go to state 49
+    term    ir ao estado 54
+    factor  ir ao estado 49
 
 
-State 51
+Estado 51
 
-   26 simple_expression: simple_expression MINUS . term
+   26 simple_expression: simple_expression MINUS • term
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
+    IDENTIFIER  deslocar, e ir ao estado 44
+    NUMBER      deslocar, e ir ao estado 45
 
-    term    go to state 55
-    factor  go to state 49
+    term    ir ao estado 55
+    factor  ir ao estado 49
 
 
-State 52
+Estado 52
 
-   28 term: term MULTIPLY . factor
+   28 term: term MULTIPLY • factor
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
+    IDENTIFIER  deslocar, e ir ao estado 44
+    NUMBER      deslocar, e ir ao estado 45
 
-    factor  go to state 56
+    factor  ir ao estado 56
 
 
-State 53
+Estado 53
 
-   29 term: term DIVIDE . factor
+   29 term: term DIVIDE • factor
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
+    IDENTIFIER  deslocar, e ir ao estado 44
+    NUMBER      deslocar, e ir ao estado 45
 
-    factor  go to state 57
+    factor  ir ao estado 57
 
 
-State 54
+Estado 54
 
-   25 simple_expression: simple_expression PLUS term .
-   28 term: term . MULTIPLY factor
-   29     | term . DIVIDE factor
+   25 simple_expression: simple_expression PLUS term •
+   28 term: term • MULTIPLY factor
+   29     | term • DIVIDE factor
 
-    MULTIPLY  shift, and go to state 52
-    DIVIDE    shift, and go to state 53
+    MULTIPLY  deslocar, e ir ao estado 52
+    DIVIDE    deslocar, e ir ao estado 53
 
-    $default  reduce using rule 25 (simple_expression)
+    $padrão  reduzir usando a regra 25 (simple_expression)
 
 
-State 55
+Estado 55
 
-   26 simple_expression: simple_expression MINUS term .
-   28 term: term . MULTIPLY factor
-   29     | term . DIVIDE factor
+   26 simple_expression: simple_expression MINUS term •
+   28 term: term • MULTIPLY factor
+   29     | term • DIVIDE factor
 
-    MULTIPLY  shift, and go to state 52
-    DIVIDE    shift, and go to state 53
+    MULTIPLY  deslocar, e ir ao estado 52
+    DIVIDE    deslocar, e ir ao estado 53
 
-    $default  reduce using rule 26 (simple_expression)
+    $padrão  reduzir usando a regra 26 (simple_expression)
 
 
-State 56
+Estado 56
 
-   28 term: term MULTIPLY factor .
+   28 term: term MULTIPLY factor •
 
-    $default  reduce using rule 28 (term)
+    $padrão  reduzir usando a regra 28 (term)
 
 
-State 57
+Estado 57
 
-   29 term: term DIVIDE factor .
+   29 term: term DIVIDE factor •
 
-    $default  reduce using rule 29 (term)
+    $padrão  reduzir usando a regra 29 (term)

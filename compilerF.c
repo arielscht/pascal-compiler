@@ -17,7 +17,6 @@ symbols symbol, relation;
 char token[TOKEN_SIZE];
 int lexical_level;
 int offset;
-int num_lines;
 
 FILE *fp = NULL;
 void generate_code(char *label, char *command)
