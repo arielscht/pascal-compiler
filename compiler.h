@@ -36,7 +36,13 @@ typedef enum symbols
   plus_symbol,
   minus_symbol,
   multiply_symbol,
-  div_symbol
+  div_symbol,
+  equal_symbol,
+  not_equal_symbol,
+  less_symbol,
+  less_equal_symbol,
+  greater_equal_symbol,
+  greater_symbol,
 } symbols;
 
 typedef enum symbol_category

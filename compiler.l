@@ -162,7 +162,7 @@ do      {
           return DO;
         }
 
-div  {
+div     {
           symbol = int_div_symbol;
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" intdiv  ");
@@ -174,6 +174,48 @@ div  {
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" assignment  ");
           return ASSIGNMENT;
+        }
+
+\=      {
+          symbol = equal_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" equal  ");
+          return EQUAL;
+        }
+
+\<\>      {
+          symbol = not_equal_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" not equal  ");
+          return NOT_EQUAL;
+        }
+
+\<       {
+          symbol = less_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" less  ");
+          return LESS;
+        }
+
+\<\=       {
+          symbol = less_equal_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" less equal  ");
+          return LESS_EQUAL;
+        }
+        
+\>\=       {
+          symbol = greater_equal_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" greater equal  ");
+          return GREATER_EQUAL;
+        }
+        
+\>       {
+          symbol = greater_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" greater  ");
+          return GREATER;
         }
 
 \;      { 

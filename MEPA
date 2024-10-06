@@ -7,18 +7,6 @@
      AMRZ 0,1
      CRVL 0,0
      CRVL 0,1
-     SOMA
-     AMRZ 0,2
-     CRVL 0,2
-     CRCT 1
-     SUBT
-     AMRZ 0,2
-     CRVL 0,2
-     CRVL 0,0
-     MULT
-     AMRZ 0,0
-     CRVL 0,2
-     CRVL 0,0
-     DIVI
-     AMRZ 0,1
+     CMDG
+     AMRZ 0,3
      PARA

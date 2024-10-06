@@ -26,7 +26,8 @@ int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
 symbol_entry *search_var(char *identifier);
-int check_exp_type(var_type type);
+void check_exp_det_type(var_type type);
+void check_exp_types();
 void add_exp_entry(var_type type);
 
 char *symbol_to_find;
@@ -42,6 +43,7 @@ symbol_entry *var_to_assign;
 %token GOTO 
 %token IF THEN ELSE NOT OR AND WHILE DO
 %token INTDIV PLUS MINUS MULTIPLY DIVIDE
+%token EQUAL NOT_EQUAL LESS LESS_EQUAL GREATER_EQUAL GREATER
 
 %%
 
@@ -90,7 +92,6 @@ type:
                      IDENTIFIER
                      {
                         stack_print("Table of symbols\n", symbol_table, print_symbol);
-                        printf("identifier: %s\n", token);
                         if(strcmp(token, "integer") == 0) {
                            set_var_types(INTEGER);
                            stack_print("Table of symbols\n", symbol_table, print_symbol);
@@ -158,7 +159,6 @@ assignment:
                         exp_entry *entry;
                         entry = (exp_entry *)stack_pop(&exp_stack);
                         if(entry->type != var_to_assign->type) {
-                           free(entry);
                            print_error("Type mismatch.");
                         }
                         free(entry);
@@ -167,18 +167,59 @@ assignment:
 
 expression:
                      simple_expression
+                     | simple_expression relation
+;
+
+relation:
+                     EQUAL simple_expression
+                     {
+                        check_exp_types();
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMIG");
+                     }
+                     | NOT_EQUAL simple_expression
+                     {
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        check_exp_types();
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMDG");
+                     }
+                     | LESS simple_expression
+                     {
+                        check_exp_det_type(INTEGER);
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMME");
+                     }
+                     | LESS_EQUAL simple_expression
+                     {
+                        check_exp_det_type(INTEGER);
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMEG");
+                     }
+                     | GREATER_EQUAL simple_expression
+                     {
+                        check_exp_det_type(INTEGER);
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMAG");
+                     }
+                     | GREATER simple_expression
+                     {
+                        check_exp_det_type(INTEGER);
+                        add_exp_entry(BOOLEAN);
+                        generate_code(NULL, "CMMA");
+                     }
 ;
 
 simple_expression:
                      simple_expression PLUS term
                      {
-                        check_exp_type(INTEGER);
+                        check_exp_det_type(INTEGER);
                         add_exp_entry(INTEGER);
                         generate_code(NULL, "SOMA");
                      }
                      | simple_expression MINUS term
                      {
-                        check_exp_type(INTEGER);
+                        check_exp_det_type(INTEGER);
                         add_exp_entry(INTEGER);
                         generate_code(NULL, "SUBT");
                      }
@@ -188,13 +229,13 @@ simple_expression:
 term: 
                      term MULTIPLY factor
                      {
-                        check_exp_type(INTEGER);
+                        check_exp_det_type(INTEGER);
                         add_exp_entry(INTEGER);
                         generate_code(NULL, "MULT");
                      }
                      | term DIVIDE factor
                      {
-                        check_exp_type(INTEGER);
+                        check_exp_det_type(INTEGER);
                         add_exp_entry(INTEGER);
                         generate_code(NULL, "DIVI");
                      }
@@ -220,7 +261,21 @@ factor:
 
 %%
 
-int check_exp_type(var_type type) {
+void check_exp_types() {
+   exp_entry *left_exp, *right_exp;
+
+   left_exp = (exp_entry *)stack_pop(&exp_stack);
+   right_exp = (exp_entry *)stack_pop(&exp_stack);
+
+   if(left_exp->type != right_exp->type) {
+      print_error("Type mysmatch.");
+   }
+
+   free(left_exp);
+   free(right_exp);
+}
+
+void check_exp_det_type(var_type type) {
    exp_entry *left_exp, *right_exp;
 
    left_exp = (exp_entry *)stack_pop(&exp_stack);
@@ -229,8 +284,6 @@ int check_exp_type(var_type type) {
    if(left_exp->type != type 
       || right_exp->type != type
       || (left_exp->type != right_exp->type)) {
-      free(left_exp);
-      free(right_exp);
       print_error("Type mysmatch.");
    }
 
