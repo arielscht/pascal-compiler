@@ -268,6 +268,7 @@ factor:
                         sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
                         generate_code(NULL, buffer);
                      }
+                     | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
 ;
 
 %%

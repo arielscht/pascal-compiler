@@ -85,6 +85,7 @@ Grammar
 
    37 factor: NUMBER
    38       | IDENTIFIER
+   39       | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
 
 
 Terminals, with rules where they appear
@@ -92,8 +93,8 @@ Terminals, with rules where they appear
     $end (0) 0
     error (256)
     PROGRAM (258) 2
-    OPEN_PARENTHESIS (259) 2
-    CLOSE_PARENTHESIS (260) 2
+    OPEN_PARENTHESIS (259) 2 39
+    CLOSE_PARENTHESIS (260) 2 39
     OPEN_BRACKETS (261)
     CLOSE_BRACKETS (262)
     COMMA (263) 11 13
@@ -188,7 +189,7 @@ Nonterminals, with rules where they appear
         on right: 22
     expression (61)
         on left: 23 24
-        on right: 22
+        on right: 22 39
     relation (62)
         on left: 25 26 27 28 29 30
         on right: 24
@@ -199,7 +200,7 @@ Nonterminals, with rules where they appear
         on left: 34 35 36
         on right: 31 32 33 34 35
     factor (65)
-        on left: 37 38
+        on left: 37 38 39
         on right: 34 35 36
 
 
@@ -532,13 +533,14 @@ State 40
 
    22 assignment: IDENTIFIER $@4 ASSIGNMENT . expression
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    expression         go to state 44
-    simple_expression  go to state 45
-    term               go to state 46
-    factor             go to state 47
+    expression         go to state 45
+    simple_expression  go to state 46
+    term               go to state 47
+    factor             go to state 48
 
 
 State 41
@@ -550,290 +552,328 @@ State 41
 
 State 42
 
+   39 factor: OPEN_PARENTHESIS . expression CLOSE_PARENTHESIS
+
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
+
+    expression         go to state 49
+    simple_expression  go to state 46
+    term               go to state 47
+    factor             go to state 48
+
+
+State 43
+
    38 factor: IDENTIFIER .
 
     $default  reduce using rule 38 (factor)
 
 
-State 43
+State 44
 
    37 factor: NUMBER .
 
     $default  reduce using rule 37 (factor)
 
 
-State 44
+State 45
 
    22 assignment: IDENTIFIER $@4 ASSIGNMENT expression .
 
     $default  reduce using rule 22 (assignment)
 
 
-State 45
+State 46
 
    23 expression: simple_expression .
    24           | simple_expression . relation
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS           shift, and go to state 48
-    MINUS          shift, and go to state 49
-    EQUAL          shift, and go to state 50
-    NOT_EQUAL      shift, and go to state 51
-    LESS           shift, and go to state 52
-    LESS_EQUAL     shift, and go to state 53
-    GREATER_EQUAL  shift, and go to state 54
-    GREATER        shift, and go to state 55
+    PLUS           shift, and go to state 50
+    MINUS          shift, and go to state 51
+    EQUAL          shift, and go to state 52
+    NOT_EQUAL      shift, and go to state 53
+    LESS           shift, and go to state 54
+    LESS_EQUAL     shift, and go to state 55
+    GREATER_EQUAL  shift, and go to state 56
+    GREATER        shift, and go to state 57
 
     $default  reduce using rule 23 (expression)
 
-    relation  go to state 56
+    relation  go to state 58
 
 
-State 46
+State 47
 
    33 simple_expression: term .
    34 term: term . MULTIPLY factor
    35     | term . DIVIDE factor
 
-    MULTIPLY  shift, and go to state 57
-    DIVIDE    shift, and go to state 58
+    MULTIPLY  shift, and go to state 59
+    DIVIDE    shift, and go to state 60
 
     $default  reduce using rule 33 (simple_expression)
 
 
-State 47
+State 48
 
    36 term: factor .
 
     $default  reduce using rule 36 (term)
 
 
-State 48
-
-   31 simple_expression: simple_expression PLUS . term
-
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    term    go to state 59
-    factor  go to state 47
-
-
 State 49
 
-   32 simple_expression: simple_expression MINUS . term
+   39 factor: OPEN_PARENTHESIS expression . CLOSE_PARENTHESIS
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
-
-    term    go to state 60
-    factor  go to state 47
+    CLOSE_PARENTHESIS  shift, and go to state 61
 
 
 State 50
 
-   25 relation: EQUAL . simple_expression
+   31 simple_expression: simple_expression PLUS . term
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 61
-    term               go to state 46
-    factor             go to state 47
+    term    go to state 62
+    factor  go to state 48
 
 
 State 51
 
-   26 relation: NOT_EQUAL . simple_expression
+   32 simple_expression: simple_expression MINUS . term
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 62
-    term               go to state 46
-    factor             go to state 47
+    term    go to state 63
+    factor  go to state 48
 
 
 State 52
 
-   27 relation: LESS . simple_expression
+   25 relation: EQUAL . simple_expression
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 63
-    term               go to state 46
-    factor             go to state 47
+    simple_expression  go to state 64
+    term               go to state 47
+    factor             go to state 48
 
 
 State 53
 
-   28 relation: LESS_EQUAL . simple_expression
+   26 relation: NOT_EQUAL . simple_expression
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 64
-    term               go to state 46
-    factor             go to state 47
+    simple_expression  go to state 65
+    term               go to state 47
+    factor             go to state 48
 
 
 State 54
 
-   29 relation: GREATER_EQUAL . simple_expression
+   27 relation: LESS . simple_expression
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 65
-    term               go to state 46
-    factor             go to state 47
+    simple_expression  go to state 66
+    term               go to state 47
+    factor             go to state 48
 
 
 State 55
 
-   30 relation: GREATER . simple_expression
+   28 relation: LESS_EQUAL . simple_expression
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    simple_expression  go to state 66
-    term               go to state 46
-    factor             go to state 47
+    simple_expression  go to state 67
+    term               go to state 47
+    factor             go to state 48
 
 
 State 56
+
+   29 relation: GREATER_EQUAL . simple_expression
+
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
+
+    simple_expression  go to state 68
+    term               go to state 47
+    factor             go to state 48
+
+
+State 57
+
+   30 relation: GREATER . simple_expression
+
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
+
+    simple_expression  go to state 69
+    term               go to state 47
+    factor             go to state 48
+
+
+State 58
 
    24 expression: simple_expression relation .
 
     $default  reduce using rule 24 (expression)
 
 
-State 57
+State 59
 
    34 term: term MULTIPLY . factor
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    factor  go to state 67
+    factor  go to state 70
 
 
-State 58
+State 60
 
    35 term: term DIVIDE . factor
 
-    IDENTIFIER  shift, and go to state 42
-    NUMBER      shift, and go to state 43
+    OPEN_PARENTHESIS  shift, and go to state 42
+    IDENTIFIER        shift, and go to state 43
+    NUMBER            shift, and go to state 44
 
-    factor  go to state 68
+    factor  go to state 71
 
 
-State 59
+State 61
+
+   39 factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS .
+
+    $default  reduce using rule 39 (factor)
+
+
+State 62
 
    31 simple_expression: simple_expression PLUS term .
    34 term: term . MULTIPLY factor
    35     | term . DIVIDE factor
 
-    MULTIPLY  shift, and go to state 57
-    DIVIDE    shift, and go to state 58
+    MULTIPLY  shift, and go to state 59
+    DIVIDE    shift, and go to state 60
 
     $default  reduce using rule 31 (simple_expression)
 
 
-State 60
+State 63
 
    32 simple_expression: simple_expression MINUS term .
    34 term: term . MULTIPLY factor
    35     | term . DIVIDE factor
 
-    MULTIPLY  shift, and go to state 57
-    DIVIDE    shift, and go to state 58
+    MULTIPLY  shift, and go to state 59
+    DIVIDE    shift, and go to state 60
 
     $default  reduce using rule 32 (simple_expression)
 
 
-State 61
+State 64
 
    25 relation: EQUAL simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 25 (relation)
 
 
-State 62
+State 65
 
    26 relation: NOT_EQUAL simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 26 (relation)
 
 
-State 63
+State 66
 
    27 relation: LESS simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 27 (relation)
 
 
-State 64
+State 67
 
    28 relation: LESS_EQUAL simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 28 (relation)
 
 
-State 65
+State 68
 
    29 relation: GREATER_EQUAL simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 29 (relation)
 
 
-State 66
+State 69
 
    30 relation: GREATER simple_expression .
    31 simple_expression: simple_expression . PLUS term
    32                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 48
-    MINUS  shift, and go to state 49
+    PLUS   shift, and go to state 50
+    MINUS  shift, and go to state 51
 
     $default  reduce using rule 30 (relation)
 
 
-State 67
+State 70
 
    34 term: term MULTIPLY factor .
 
     $default  reduce using rule 34 (term)
 
 
-State 68
+State 71
 
    35 term: term DIVIDE factor .
 
