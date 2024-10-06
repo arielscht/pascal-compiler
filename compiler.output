@@ -30,7 +30,7 @@ Grammar
 
     3 $@2: %empty
 
-    4 block: vars_declaration $@2 compound_command
+    4 block: $@2 vars_declaration compound_command
 
     5 vars_declaration: VAR declare_vars
     6                 | %empty
@@ -38,53 +38,49 @@ Grammar
     7 declare_vars: declare_vars declare_var
     8             | declare_var
 
-    9 $@3: %empty
+    9 declare_var: var_list COLON type SEMICOLON
 
-   10 $@4: %empty
+   10 type: IDENTIFIER
 
-   11 declare_var: $@3 var_list COLON type $@4 SEMICOLON
+   11 var_list: var_list COMMA IDENTIFIER
+   12         | IDENTIFIER
 
-   12 type: IDENTIFIER
+   13 identifiers_list: identifiers_list COMMA IDENTIFIER
+   14                 | IDENTIFIER
 
-   13 var_list: var_list COMMA IDENTIFIER
-   14         | IDENTIFIER
+   15 $@3: %empty
 
-   15 identifiers_list: identifiers_list COMMA IDENTIFIER
-   16                 | IDENTIFIER
+   16 compound_command: $@3 T_BEGIN commands T_END
 
-   17 $@5: %empty
+   17 commands: commands command SEMICOLON
+   18         | command SEMICOLON
 
-   18 compound_command: $@5 T_BEGIN commands T_END
+   19 command: assignment
 
-   19 commands: commands command SEMICOLON
-   20         | command SEMICOLON
+   20 $@4: %empty
 
-   21 command: assignment
+   21 assignment: IDENTIFIER $@4 ASSIGNMENT expression
 
-   22 $@6: %empty
+   22 expression: simple_expression
+   23           | simple_expression relation
 
-   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression
+   24 relation: EQUAL simple_expression
+   25         | NOT_EQUAL simple_expression
+   26         | LESS simple_expression
+   27         | LESS_EQUAL simple_expression
+   28         | GREATER_EQUAL simple_expression
+   29         | GREATER simple_expression
 
-   24 expression: simple_expression
-   25           | simple_expression relation
+   30 simple_expression: simple_expression PLUS term
+   31                  | simple_expression MINUS term
+   32                  | term
 
-   26 relation: EQUAL simple_expression
-   27         | NOT_EQUAL simple_expression
-   28         | LESS simple_expression
-   29         | LESS_EQUAL simple_expression
-   30         | GREATER_EQUAL simple_expression
-   31         | GREATER simple_expression
+   33 term: term MULTIPLY factor
+   34     | term DIVIDE factor
+   35     | factor
 
-   32 simple_expression: simple_expression PLUS term
-   33                  | simple_expression MINUS term
-   34                  | term
-
-   35 term: term MULTIPLY factor
-   36     | term DIVIDE factor
-   37     | factor
-
-   38 factor: NUMBER
-   39       | IDENTIFIER
+   36 factor: NUMBER
+   37       | IDENTIFIER
 
 
 Terminals, with rules where they appear
@@ -96,16 +92,16 @@ Terminals, with rules where they appear
     CLOSE_PARENTHESIS (260) 2
     OPEN_BRACKETS (261)
     CLOSE_BRACKETS (262)
-    COMMA (263) 13 15
-    SEMICOLON (264) 2 11 19 20
-    COLON (265) 11
+    COMMA (263) 11 13
+    SEMICOLON (264) 2 9 17 18
+    COLON (265) 9
     DOT (266) 2
-    T_BEGIN (267) 18
-    T_END (268) 18
+    T_BEGIN (267) 16
+    T_END (268) 16
     VAR (269) 5
-    IDENTIFIER (270) 2 12 13 14 15 16 23 39
-    ASSIGNMENT (271) 23
-    NUMBER (272) 38
+    IDENTIFIER (270) 2 10 11 12 13 14 21 37
+    ASSIGNMENT (271) 21
+    NUMBER (272) 36
     LABEL (273)
     TYPE (274)
     ARRAY (275)
@@ -122,16 +118,16 @@ Terminals, with rules where they appear
     WHILE (286)
     DO (287)
     INTDIV (288)
-    PLUS (289) 32
-    MINUS (290) 33
-    MULTIPLY (291) 35
-    DIVIDE (292) 36
-    EQUAL (293) 26
-    NOT_EQUAL (294) 27
-    LESS (295) 28
-    LESS_EQUAL (296) 29
-    GREATER_EQUAL (297) 30
-    GREATER (298) 31
+    PLUS (289) 30
+    MINUS (290) 31
+    MULTIPLY (291) 33
+    DIVIDE (292) 34
+    EQUAL (293) 24
+    NOT_EQUAL (294) 25
+    LESS (295) 26
+    LESS_EQUAL (296) 27
+    GREATER_EQUAL (297) 28
+    GREATER (298) 29
 
 
 Nonterminals, with rules where they appear
@@ -157,56 +153,50 @@ Nonterminals, with rules where they appear
         on left: 7 8
         on right: 5 7
     declare_var (51)
-        on left: 11
-        on right: 7 8
-    $@3 (52)
         on left: 9
-        on right: 11
-    $@4 (53)
+        on right: 7 8
+    type (52)
         on left: 10
-        on right: 11
-    type (54)
-        on left: 12
-        on right: 11
-    var_list (55)
+        on right: 9
+    var_list (53)
+        on left: 11 12
+        on right: 9 11
+    identifiers_list (54)
         on left: 13 14
-        on right: 11 13
-    identifiers_list (56)
-        on left: 15 16
-        on right: 2 15
-    compound_command (57)
-        on left: 18
+        on right: 2 13
+    compound_command (55)
+        on left: 16
         on right: 4
-    $@5 (58)
-        on left: 17
-        on right: 18
-    commands (59)
-        on left: 19 20
-        on right: 18 19
-    command (60)
+    $@3 (56)
+        on left: 15
+        on right: 16
+    commands (57)
+        on left: 17 18
+        on right: 16 17
+    command (58)
+        on left: 19
+        on right: 17 18
+    assignment (59)
         on left: 21
-        on right: 19 20
-    assignment (61)
-        on left: 23
+        on right: 19
+    $@4 (60)
+        on left: 20
         on right: 21
-    $@6 (62)
-        on left: 22
+    expression (61)
+        on left: 22 23
+        on right: 21
+    relation (62)
+        on left: 24 25 26 27 28 29
         on right: 23
-    expression (63)
-        on left: 24 25
-        on right: 23
-    relation (64)
-        on left: 26 27 28 29 30 31
-        on right: 25
-    simple_expression (65)
-        on left: 32 33 34
-        on right: 24 25 26 27 28 29 30 31 32 33
-    term (66)
-        on left: 35 36 37
-        on right: 32 33 34 35 36
-    factor (67)
-        on left: 38 39
-        on right: 35 36 37
+    simple_expression (63)
+        on left: 30 31 32
+        on right: 22 23 24 25 26 27 28 29 30 31
+    term (64)
+        on left: 33 34 35
+        on right: 30 31 32 33 34
+    factor (65)
+        on left: 36 37
+        on right: 33 34 35
 
 
 State 0
@@ -265,15 +255,15 @@ State 6
 
 State 7
 
-   16 identifiers_list: IDENTIFIER .
+   14 identifiers_list: IDENTIFIER .
 
-    $default  reduce using rule 16 (identifiers_list)
+    $default  reduce using rule 14 (identifiers_list)
 
 
 State 8
 
     2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list . CLOSE_PARENTHESIS SEMICOLON block DOT
-   15 identifiers_list: identifiers_list . COMMA IDENTIFIER
+   13 identifiers_list: identifiers_list . COMMA IDENTIFIER
 
     CLOSE_PARENTHESIS  shift, and go to state 9
     COMMA              shift, and go to state 10
@@ -288,7 +278,7 @@ State 9
 
 State 10
 
-   15 identifiers_list: identifiers_list COMMA . IDENTIFIER
+   13 identifiers_list: identifiers_list COMMA . IDENTIFIER
 
     IDENTIFIER  shift, and go to state 12
 
@@ -297,564 +287,547 @@ State 11
 
     2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON . block DOT
 
-    VAR  shift, and go to state 13
+    $default  reduce using rule 3 ($@2)
 
-    $default  reduce using rule 6 (vars_declaration)
-
-    block             go to state 14
-    vars_declaration  go to state 15
+    block  go to state 13
+    $@2    go to state 14
 
 
 State 12
 
-   15 identifiers_list: identifiers_list COMMA IDENTIFIER .
+   13 identifiers_list: identifiers_list COMMA IDENTIFIER .
 
-    $default  reduce using rule 15 (identifiers_list)
+    $default  reduce using rule 13 (identifiers_list)
 
 
 State 13
 
-    5 vars_declaration: VAR . declare_vars
+    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block . DOT
 
-    $default  reduce using rule 9 ($@3)
-
-    declare_vars  go to state 16
-    declare_var   go to state 17
-    $@3           go to state 18
+    DOT  shift, and go to state 15
 
 
 State 14
 
-    2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block . DOT
+    4 block: $@2 . vars_declaration compound_command
 
-    DOT  shift, and go to state 19
+    VAR  shift, and go to state 16
+
+    $default  reduce using rule 6 (vars_declaration)
+
+    vars_declaration  go to state 17
 
 
 State 15
-
-    4 block: vars_declaration . $@2 compound_command
-
-    $default  reduce using rule 3 ($@2)
-
-    $@2  go to state 20
-
-
-State 16
-
-    5 vars_declaration: VAR declare_vars .
-    7 declare_vars: declare_vars . declare_var
-
-    IDENTIFIER  reduce using rule 9 ($@3)
-    $default    reduce using rule 5 (vars_declaration)
-
-    declare_var  go to state 21
-    $@3          go to state 18
-
-
-State 17
-
-    8 declare_vars: declare_var .
-
-    $default  reduce using rule 8 (declare_vars)
-
-
-State 18
-
-   11 declare_var: $@3 . var_list COLON type $@4 SEMICOLON
-
-    IDENTIFIER  shift, and go to state 22
-
-    var_list  go to state 23
-
-
-State 19
 
     2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON block DOT .
 
     $default  reduce using rule 2 (program)
 
 
+State 16
+
+    5 vars_declaration: VAR . declare_vars
+
+    IDENTIFIER  shift, and go to state 18
+
+    declare_vars  go to state 19
+    declare_var   go to state 20
+    var_list      go to state 21
+
+
+State 17
+
+    4 block: $@2 vars_declaration . compound_command
+
+    $default  reduce using rule 15 ($@3)
+
+    compound_command  go to state 22
+    $@3               go to state 23
+
+
+State 18
+
+   12 var_list: IDENTIFIER .
+
+    $default  reduce using rule 12 (var_list)
+
+
+State 19
+
+    5 vars_declaration: VAR declare_vars .
+    7 declare_vars: declare_vars . declare_var
+
+    IDENTIFIER  shift, and go to state 18
+
+    $default  reduce using rule 5 (vars_declaration)
+
+    declare_var  go to state 24
+    var_list     go to state 21
+
+
 State 20
 
-    4 block: vars_declaration $@2 . compound_command
+    8 declare_vars: declare_var .
 
-    $default  reduce using rule 17 ($@5)
-
-    compound_command  go to state 24
-    $@5               go to state 25
+    $default  reduce using rule 8 (declare_vars)
 
 
 State 21
+
+    9 declare_var: var_list . COLON type SEMICOLON
+   11 var_list: var_list . COMMA IDENTIFIER
+
+    COMMA  shift, and go to state 25
+    COLON  shift, and go to state 26
+
+
+State 22
+
+    4 block: $@2 vars_declaration compound_command .
+
+    $default  reduce using rule 4 (block)
+
+
+State 23
+
+   16 compound_command: $@3 . T_BEGIN commands T_END
+
+    T_BEGIN  shift, and go to state 27
+
+
+State 24
 
     7 declare_vars: declare_vars declare_var .
 
     $default  reduce using rule 7 (declare_vars)
 
 
-State 22
-
-   14 var_list: IDENTIFIER .
-
-    $default  reduce using rule 14 (var_list)
-
-
-State 23
-
-   11 declare_var: $@3 var_list . COLON type $@4 SEMICOLON
-   13 var_list: var_list . COMMA IDENTIFIER
-
-    COMMA  shift, and go to state 26
-    COLON  shift, and go to state 27
-
-
-State 24
-
-    4 block: vars_declaration $@2 compound_command .
-
-    $default  reduce using rule 4 (block)
-
-
 State 25
 
-   18 compound_command: $@5 . T_BEGIN commands T_END
+   11 var_list: var_list COMMA . IDENTIFIER
 
-    T_BEGIN  shift, and go to state 28
+    IDENTIFIER  shift, and go to state 28
 
 
 State 26
 
-   13 var_list: var_list COMMA . IDENTIFIER
+    9 declare_var: var_list COLON . type SEMICOLON
 
     IDENTIFIER  shift, and go to state 29
+
+    type  go to state 30
 
 
 State 27
 
-   11 declare_var: $@3 var_list COLON . type $@4 SEMICOLON
+   16 compound_command: $@3 T_BEGIN . commands T_END
 
-    IDENTIFIER  shift, and go to state 30
+    IDENTIFIER  shift, and go to state 31
 
-    type  go to state 31
+    commands    go to state 32
+    command     go to state 33
+    assignment  go to state 34
 
 
 State 28
 
-   18 compound_command: $@5 T_BEGIN . commands T_END
+   11 var_list: var_list COMMA IDENTIFIER .
 
-    IDENTIFIER  shift, and go to state 32
-
-    commands    go to state 33
-    command     go to state 34
-    assignment  go to state 35
+    $default  reduce using rule 11 (var_list)
 
 
 State 29
 
-   13 var_list: var_list COMMA IDENTIFIER .
+   10 type: IDENTIFIER .
 
-    $default  reduce using rule 13 (var_list)
+    $default  reduce using rule 10 (type)
 
 
 State 30
 
-   12 type: IDENTIFIER .
+    9 declare_var: var_list COLON type . SEMICOLON
 
-    $default  reduce using rule 12 (type)
+    SEMICOLON  shift, and go to state 35
 
 
 State 31
 
-   11 declare_var: $@3 var_list COLON type . $@4 SEMICOLON
+   21 assignment: IDENTIFIER . $@4 ASSIGNMENT expression
 
-    $default  reduce using rule 10 ($@4)
+    $default  reduce using rule 20 ($@4)
 
     $@4  go to state 36
 
 
 State 32
 
-   23 assignment: IDENTIFIER . $@6 ASSIGNMENT expression
+   16 compound_command: $@3 T_BEGIN commands . T_END
+   17 commands: commands . command SEMICOLON
 
-    $default  reduce using rule 22 ($@6)
+    T_END       shift, and go to state 37
+    IDENTIFIER  shift, and go to state 31
 
-    $@6  go to state 37
+    command     go to state 38
+    assignment  go to state 34
 
 
 State 33
 
-   18 compound_command: $@5 T_BEGIN commands . T_END
-   19 commands: commands . command SEMICOLON
+   18 commands: command . SEMICOLON
 
-    T_END       shift, and go to state 38
-    IDENTIFIER  shift, and go to state 32
-
-    command     go to state 39
-    assignment  go to state 35
+    SEMICOLON  shift, and go to state 39
 
 
 State 34
 
-   20 commands: command . SEMICOLON
+   19 command: assignment .
 
-    SEMICOLON  shift, and go to state 40
+    $default  reduce using rule 19 (command)
 
 
 State 35
 
-   21 command: assignment .
+    9 declare_var: var_list COLON type SEMICOLON .
 
-    $default  reduce using rule 21 (command)
+    $default  reduce using rule 9 (declare_var)
 
 
 State 36
 
-   11 declare_var: $@3 var_list COLON type $@4 . SEMICOLON
+   21 assignment: IDENTIFIER $@4 . ASSIGNMENT expression
 
-    SEMICOLON  shift, and go to state 41
+    ASSIGNMENT  shift, and go to state 40
 
 
 State 37
 
-   23 assignment: IDENTIFIER $@6 . ASSIGNMENT expression
+   16 compound_command: $@3 T_BEGIN commands T_END .
 
-    ASSIGNMENT  shift, and go to state 42
+    $default  reduce using rule 16 (compound_command)
 
 
 State 38
 
-   18 compound_command: $@5 T_BEGIN commands T_END .
+   17 commands: commands command . SEMICOLON
 
-    $default  reduce using rule 18 (compound_command)
+    SEMICOLON  shift, and go to state 41
 
 
 State 39
 
-   19 commands: commands command . SEMICOLON
+   18 commands: command SEMICOLON .
 
-    SEMICOLON  shift, and go to state 43
+    $default  reduce using rule 18 (commands)
 
 
 State 40
 
-   20 commands: command SEMICOLON .
+   21 assignment: IDENTIFIER $@4 ASSIGNMENT . expression
 
-    $default  reduce using rule 20 (commands)
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    expression         go to state 44
+    simple_expression  go to state 45
+    term               go to state 46
+    factor             go to state 47
 
 
 State 41
 
-   11 declare_var: $@3 var_list COLON type $@4 SEMICOLON .
+   17 commands: commands command SEMICOLON .
 
-    $default  reduce using rule 11 (declare_var)
+    $default  reduce using rule 17 (commands)
 
 
 State 42
 
-   23 assignment: IDENTIFIER $@6 ASSIGNMENT . expression
+   37 factor: IDENTIFIER .
 
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    expression         go to state 46
-    simple_expression  go to state 47
-    term               go to state 48
-    factor             go to state 49
+    $default  reduce using rule 37 (factor)
 
 
 State 43
 
-   19 commands: commands command SEMICOLON .
+   36 factor: NUMBER .
 
-    $default  reduce using rule 19 (commands)
+    $default  reduce using rule 36 (factor)
 
 
 State 44
 
-   39 factor: IDENTIFIER .
+   21 assignment: IDENTIFIER $@4 ASSIGNMENT expression .
 
-    $default  reduce using rule 39 (factor)
+    $default  reduce using rule 21 (assignment)
 
 
 State 45
 
-   38 factor: NUMBER .
+   22 expression: simple_expression .
+   23           | simple_expression . relation
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    $default  reduce using rule 38 (factor)
+    PLUS           shift, and go to state 48
+    MINUS          shift, and go to state 49
+    EQUAL          shift, and go to state 50
+    NOT_EQUAL      shift, and go to state 51
+    LESS           shift, and go to state 52
+    LESS_EQUAL     shift, and go to state 53
+    GREATER_EQUAL  shift, and go to state 54
+    GREATER        shift, and go to state 55
+
+    $default  reduce using rule 22 (expression)
+
+    relation  go to state 56
 
 
 State 46
 
-   23 assignment: IDENTIFIER $@6 ASSIGNMENT expression .
-
-    $default  reduce using rule 23 (assignment)
-
-
-State 47
-
-   24 expression: simple_expression .
-   25           | simple_expression . relation
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
-
-    PLUS           shift, and go to state 50
-    MINUS          shift, and go to state 51
-    EQUAL          shift, and go to state 52
-    NOT_EQUAL      shift, and go to state 53
-    LESS           shift, and go to state 54
-    LESS_EQUAL     shift, and go to state 55
-    GREATER_EQUAL  shift, and go to state 56
-    GREATER        shift, and go to state 57
-
-    $default  reduce using rule 24 (expression)
-
-    relation  go to state 58
-
-
-State 48
-
-   34 simple_expression: term .
-   35 term: term . MULTIPLY factor
-   36     | term . DIVIDE factor
-
-    MULTIPLY  shift, and go to state 59
-    DIVIDE    shift, and go to state 60
-
-    $default  reduce using rule 34 (simple_expression)
-
-
-State 49
-
-   37 term: factor .
-
-    $default  reduce using rule 37 (term)
-
-
-State 50
-
-   32 simple_expression: simple_expression PLUS . term
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    term    go to state 61
-    factor  go to state 49
-
-
-State 51
-
-   33 simple_expression: simple_expression MINUS . term
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    term    go to state 62
-    factor  go to state 49
-
-
-State 52
-
-   26 relation: EQUAL . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 63
-    term               go to state 48
-    factor             go to state 49
-
-
-State 53
-
-   27 relation: NOT_EQUAL . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 64
-    term               go to state 48
-    factor             go to state 49
-
-
-State 54
-
-   28 relation: LESS . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 65
-    term               go to state 48
-    factor             go to state 49
-
-
-State 55
-
-   29 relation: LESS_EQUAL . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 66
-    term               go to state 48
-    factor             go to state 49
-
-
-State 56
-
-   30 relation: GREATER_EQUAL . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 67
-    term               go to state 48
-    factor             go to state 49
-
-
-State 57
-
-   31 relation: GREATER . simple_expression
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    simple_expression  go to state 68
-    term               go to state 48
-    factor             go to state 49
-
-
-State 58
-
-   25 expression: simple_expression relation .
-
-    $default  reduce using rule 25 (expression)
-
-
-State 59
-
-   35 term: term MULTIPLY . factor
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    factor  go to state 69
-
-
-State 60
-
-   36 term: term DIVIDE . factor
-
-    IDENTIFIER  shift, and go to state 44
-    NUMBER      shift, and go to state 45
-
-    factor  go to state 70
-
-
-State 61
-
-   32 simple_expression: simple_expression PLUS term .
-   35 term: term . MULTIPLY factor
-   36     | term . DIVIDE factor
-
-    MULTIPLY  shift, and go to state 59
-    DIVIDE    shift, and go to state 60
+   32 simple_expression: term .
+   33 term: term . MULTIPLY factor
+   34     | term . DIVIDE factor
+
+    MULTIPLY  shift, and go to state 57
+    DIVIDE    shift, and go to state 58
 
     $default  reduce using rule 32 (simple_expression)
 
 
+State 47
+
+   35 term: factor .
+
+    $default  reduce using rule 35 (term)
+
+
+State 48
+
+   30 simple_expression: simple_expression PLUS . term
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    term    go to state 59
+    factor  go to state 47
+
+
+State 49
+
+   31 simple_expression: simple_expression MINUS . term
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    term    go to state 60
+    factor  go to state 47
+
+
+State 50
+
+   24 relation: EQUAL . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 61
+    term               go to state 46
+    factor             go to state 47
+
+
+State 51
+
+   25 relation: NOT_EQUAL . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 62
+    term               go to state 46
+    factor             go to state 47
+
+
+State 52
+
+   26 relation: LESS . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 63
+    term               go to state 46
+    factor             go to state 47
+
+
+State 53
+
+   27 relation: LESS_EQUAL . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 64
+    term               go to state 46
+    factor             go to state 47
+
+
+State 54
+
+   28 relation: GREATER_EQUAL . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 65
+    term               go to state 46
+    factor             go to state 47
+
+
+State 55
+
+   29 relation: GREATER . simple_expression
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    simple_expression  go to state 66
+    term               go to state 46
+    factor             go to state 47
+
+
+State 56
+
+   23 expression: simple_expression relation .
+
+    $default  reduce using rule 23 (expression)
+
+
+State 57
+
+   33 term: term MULTIPLY . factor
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    factor  go to state 67
+
+
+State 58
+
+   34 term: term DIVIDE . factor
+
+    IDENTIFIER  shift, and go to state 42
+    NUMBER      shift, and go to state 43
+
+    factor  go to state 68
+
+
+State 59
+
+   30 simple_expression: simple_expression PLUS term .
+   33 term: term . MULTIPLY factor
+   34     | term . DIVIDE factor
+
+    MULTIPLY  shift, and go to state 57
+    DIVIDE    shift, and go to state 58
+
+    $default  reduce using rule 30 (simple_expression)
+
+
+State 60
+
+   31 simple_expression: simple_expression MINUS term .
+   33 term: term . MULTIPLY factor
+   34     | term . DIVIDE factor
+
+    MULTIPLY  shift, and go to state 57
+    DIVIDE    shift, and go to state 58
+
+    $default  reduce using rule 31 (simple_expression)
+
+
+State 61
+
+   24 relation: EQUAL simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
+
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
+
+    $default  reduce using rule 24 (relation)
+
+
 State 62
 
-   33 simple_expression: simple_expression MINUS term .
-   35 term: term . MULTIPLY factor
-   36     | term . DIVIDE factor
+   25 relation: NOT_EQUAL simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    MULTIPLY  shift, and go to state 59
-    DIVIDE    shift, and go to state 60
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
 
-    $default  reduce using rule 33 (simple_expression)
+    $default  reduce using rule 25 (relation)
 
 
 State 63
 
-   26 relation: EQUAL simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   26 relation: LESS simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
 
     $default  reduce using rule 26 (relation)
 
 
 State 64
 
-   27 relation: NOT_EQUAL simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   27 relation: LESS_EQUAL simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
 
     $default  reduce using rule 27 (relation)
 
 
 State 65
 
-   28 relation: LESS simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   28 relation: GREATER_EQUAL simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
 
     $default  reduce using rule 28 (relation)
 
 
 State 66
 
-   29 relation: LESS_EQUAL simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   29 relation: GREATER simple_expression .
+   30 simple_expression: simple_expression . PLUS term
+   31                  | simple_expression . MINUS term
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
+    PLUS   shift, and go to state 48
+    MINUS  shift, and go to state 49
 
     $default  reduce using rule 29 (relation)
 
 
 State 67
 
-   30 relation: GREATER_EQUAL simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   33 term: term MULTIPLY factor .
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
-
-    $default  reduce using rule 30 (relation)
+    $default  reduce using rule 33 (term)
 
 
 State 68
 
-   31 relation: GREATER simple_expression .
-   32 simple_expression: simple_expression . PLUS term
-   33                  | simple_expression . MINUS term
+   34 term: term DIVIDE factor .
 
-    PLUS   shift, and go to state 50
-    MINUS  shift, and go to state 51
-
-    $default  reduce using rule 31 (relation)
-
-
-State 69
-
-   35 term: term MULTIPLY factor .
-
-    $default  reduce using rule 35 (term)
-
-
-State 70
-
-   36 term: term DIVIDE factor .
-
-    $default  reduce using rule 36 (term)
+    $default  reduce using rule 34 (term)

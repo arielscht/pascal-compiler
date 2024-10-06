@@ -120,3 +120,36 @@ int stack_update(stack_t **stack, int check_elem(void *), void update_elem(void 
 
     return 0;
 }
+
+int stack_remove(stack_t **stack, int check_elem(void *))
+{
+    stack_elem_t *cur_element, *elem_to_delete;
+    cur_element = (*stack)->top;
+
+    if (stack == NULL)
+    {
+        fprintf(stderr, "The stack does not exist.\n");
+        return 1;
+    }
+
+    while (cur_element != NULL)
+    {
+        elem_to_delete = cur_element;
+        cur_element = cur_element->prev;
+        if (check_elem(elem_to_delete))
+        {
+            if (elem_to_delete->prev)
+                elem_to_delete->prev->next = elem_to_delete->next;
+
+            if (elem_to_delete->next)
+                elem_to_delete->next->prev = elem_to_delete->prev;
+
+            free(elem_to_delete);
+        }
+    };
+
+    (*stack)->top = NULL;
+    (*stack)->size = 0;
+
+    return 0;
+}

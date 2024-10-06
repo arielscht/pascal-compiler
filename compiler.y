@@ -18,6 +18,7 @@ int num_vars = 0;
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
 stack_t *exp_stack;
+stack_t *var_stack;
 
 void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
@@ -25,10 +26,12 @@ void add_symbol(symbol_category category, var_type type, char *identifier);
 int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
+int check_lexical_level(void *ptr);
 symbol_entry *search_var(char *identifier);
 void check_exp_det_type(var_type type);
 void check_exp_types();
 void add_exp_entry(var_type type);
+void add_var_entry();
 
 char *symbol_to_find;
 symbol_entry *var_to_assign;
@@ -60,14 +63,20 @@ program:
 ;
 
 block:
-                     vars_declaration
                      {
+                        add_var_entry();
                      }
+                     vars_declaration
                      compound_command
 ;
 
 vars_declaration: 
                      VAR declare_vars
+                     {
+                        var_entry *entry = (var_entry*)var_stack->top;
+                        sprintf(buffer, "AMEM %d", entry->num_vars);
+                        generate_code(NULL, buffer);
+                     }
                      | /* empty */
 ;
 
@@ -77,15 +86,7 @@ declare_vars:
 ;
 
 declare_var: 
-                     { }
-                     var_list COLON
-                     type
-                     {
-                        sprintf(buffer, "AMEM %d", num_vars);
-                        generate_code(NULL, buffer);
-                        num_vars = 0;
-                     }
-                     SEMICOLON
+                     var_list COLON type SEMICOLON
 ;
 
 type: 
@@ -107,16 +108,18 @@ type:
 
 var_list: 
                      var_list COMMA IDENTIFIER
-                     { /* insere �ltima vars na tabela de s�mbolos */
+                     {
                         add_symbol(SIMPLE_VAR, UNKNOWN, token);
-                        num_vars += 1;
-                        offset += 1;
+                        var_entry *entry = (var_entry*)var_stack->top;
+                        entry->num_vars += 1;
+                        entry->offset += 1;
                      }
                      | IDENTIFIER 
-                     { /* insere vars na tabela de s�mbolos */
+                     {
                         add_symbol(SIMPLE_VAR, UNKNOWN, token);
-                        num_vars += 1;
-                        offset += 1;
+                        var_entry *entry = (var_entry*)var_stack->top;
+                        entry->num_vars += 1;
+                        entry->offset += 1;
                      }
 ;
 
@@ -128,11 +131,19 @@ identifiers_list:
 compound_command: 
                      {
                         lexical_level += 1;
-                        offset = 0;
                      }
                      T_BEGIN commands T_END
                      {
+                        var_entry *entry;
+                        entry = (var_entry *)stack_pop(&var_stack);
+                        sprintf(buffer, "DMEM %d", entry->num_vars);
+                        generate_code(NULL, buffer);
+                        free(entry);
                         lexical_level -= 1;
+                        stack_remove(&symbol_table, check_lexical_level);
+                        stack_print("Table of symbols\n", symbol_table, print_symbol);
+                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
+                        // stack_print("Table of symbols\n", symbol_table, print_symbol);
                      }
 ;
 
@@ -179,7 +190,6 @@ relation:
                      }
                      | NOT_EQUAL simple_expression
                      {
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         check_exp_types();
                         add_exp_entry(BOOLEAN);
                         generate_code(NULL, "CMDG");
@@ -340,6 +350,20 @@ int check_unknown_type(void *ptr) {
    return 0;
 }
 
+int check_lexical_level(void *ptr) {
+   symbol_entry *elem = ptr;
+
+   if(!elem) {
+      return 0;
+   }
+
+   if(elem->lexical_level == lexical_level) {
+      return 1;
+   }
+
+   return 0;
+}
+
 int update_type(symbol_entry **symbol, var_type type) { 
    (*symbol)->type = type; 
 }
@@ -366,13 +390,23 @@ void add_exp_entry(var_type type)
    stack_push(&exp_stack, (stack_elem_t *)entry);
 }
 
+void add_var_entry() {
+   var_entry *entry = malloc(sizeof(var_entry));
+   entry->prev = NULL;
+   entry->next = NULL;
+   entry->num_vars = 0;
+   entry->offset = 0;
+   stack_push(&var_stack, (stack_elem_t*)entry);
+}
+
 void add_symbol(symbol_category category, var_type type, char *identifier) {
+   var_entry *entry = (var_entry*)var_stack->top;
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->prev = NULL;
    symbol->next = NULL;
    symbol->category = category;
    strncpy(symbol->identifier, token, TOKEN_SIZE);
-   symbol->offset = offset;
+   symbol->offset = entry->offset;
    symbol->lexical_level = lexical_level;
    symbol->type = type;
    stack_push(&symbol_table, (stack_elem_t *)symbol);
@@ -420,6 +454,8 @@ int main (int argc, char** argv) {
  * ------------------------------------------------------------------- */
    symbol_table = malloc(sizeof(stack_t));
    exp_stack = malloc(sizeof(stack_t));
+   var_stack = malloc(sizeof(stack_t));
+
    lexical_level = 0;
    offset = 0;
 
@@ -429,6 +465,7 @@ int main (int argc, char** argv) {
 
    free(symbol_table);
    free(exp_stack);
+   free(var_stack);
 
    return 0;
 }
