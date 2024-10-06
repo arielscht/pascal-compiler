@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "compiler.h"
 #include "stack.h"
@@ -15,13 +16,16 @@
 #define BUFFER_SIZE 100
 
 int num_vars = 0;
+int num_labels = 0;
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
 stack_t *exp_stack;
 stack_t *var_stack;
+stack_t *label_stack;
 
 void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
+void print_label_entry(void *ptr);
 void add_symbol(symbol_category category, var_type type, char *identifier);
 int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
@@ -32,6 +36,8 @@ void check_exp_det_type(var_type type);
 void check_exp_types();
 void add_exp_entry(var_type type);
 void add_var_entry();
+void add_labels(int quantity);
+void remove_labels(int quantity);
 
 char *symbol_to_find;
 symbol_entry *var_to_assign;
@@ -141,9 +147,6 @@ compound_command:
                         free(entry);
                         lexical_level -= 1;
                         stack_remove(&symbol_table, check_lexical_level);
-                        stack_print("Table of symbols\n", symbol_table, print_symbol);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
-                        // stack_print("Table of symbols\n", symbol_table, print_symbol);
                      }
 ;
 
@@ -153,8 +156,15 @@ commands:
                      | /* empty */
 ;
 
-command:             
+command:
+                     NUMBER SEMICOLON no_label_command
+                     | no_label_command
+;
+
+no_label_command:             
                      assignment
+                     | compound_command
+                     | loop
 ;
 
 assignment:
@@ -269,6 +279,37 @@ factor:
                         generate_code(NULL, buffer);
                      }
                      | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
+;
+
+loop:
+                     {
+                        label_entry *entry;
+
+                        add_labels(2);
+                        entry = (label_entry *)label_stack->top->prev;
+                        sprintf(buffer, "NADA");
+                        generate_code(entry->label, buffer);
+                     }
+                     WHILE expression 
+                     {
+                        label_entry *entry;
+                        entry = (label_entry *)label_stack->top;
+
+                        sprintf(buffer, "DSVF %s", entry->label);
+                        generate_code(NULL, buffer);
+                     } 
+                     DO no_label_command
+                     {
+                        label_entry *entry1, *entry2;
+                        entry1 = (label_entry *) label_stack->top->prev;
+                        entry2 = (label_entry *) label_stack->top;
+
+                        sprintf(buffer, "DSVS %s", entry1->label);
+                        generate_code(NULL, buffer);
+                        sprintf(buffer, "NADA");
+                        generate_code(entry2->label, buffer);
+                        remove_labels(2);
+                     }
 ;
 
 %%
@@ -401,6 +442,43 @@ void add_var_entry() {
    stack_push(&var_stack, (stack_elem_t*)entry);
 }
 
+void add_label() {
+   int num_digits = (int)log10(num_labels) + 1;
+   int num_chars = num_digits <= 2 ? 3 : 1 + num_digits;
+
+   label_entry *entry = malloc(sizeof(label_entry));
+   entry->prev = NULL;
+   entry->next = NULL;
+   entry->label = calloc(num_chars + 1, sizeof(char *));
+   sprintf(entry->label, "R%02d", num_labels);
+   stack_push(&label_stack, (stack_elem_t *)entry);
+
+   num_labels++;
+}
+
+void add_labels(int quantity) {
+   int i;
+
+   for(i = 0; i < quantity; i++) {
+      add_label();
+   }
+}
+
+void remove_labels(int quantity) {
+   label_entry *entry;
+   int i;
+
+   for(i = 0; i < quantity; i++) {
+      entry = (label_entry*)stack_pop(&label_stack);
+      if(entry) {
+         free(entry->label);
+         free(entry);
+      } else {
+         return;
+      }
+   }
+}
+
 void add_symbol(symbol_category category, var_type type, char *identifier) {
    var_entry *entry = (var_entry*)var_stack->top;
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
@@ -435,6 +513,16 @@ void print_exp_entry(void *ptr)
    printf("type: %d\n", elem->type);
 }
 
+void print_label_entry(void *ptr) {
+   label_entry *elem = ptr;
+
+   if(!elem) {
+      return;
+   }
+
+   printf("label: %s\n", elem->label);
+}
+
 int main (int argc, char** argv) {
    FILE* fp;
    extern FILE* yyin;
@@ -457,6 +545,7 @@ int main (int argc, char** argv) {
    symbol_table = malloc(sizeof(stack_t));
    exp_stack = malloc(sizeof(stack_t));
    var_stack = malloc(sizeof(stack_t));
+   label_stack = malloc(sizeof(stack_t));
 
    lexical_level = 0;
    offset = 0;
@@ -468,6 +557,7 @@ int main (int argc, char** argv) {
    free(symbol_table);
    free(exp_stack);
    free(var_stack);
+   free(label_stack);
 
    return 0;
 }

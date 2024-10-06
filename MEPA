@@ -6,5 +6,16 @@
      CRCT 2
      SOMA
      AMRZ 0,0
+R00: NADA 
+     CRVL 0,0
+     CRCT 5
+     CMMA
+     DSVF R01
+     CRVL 0,0
+     CRCT 1
+     SUBT
+     AMRZ 0,0
+     DSVS R00
+R01: NADA 
      DMEM 3
      PARA

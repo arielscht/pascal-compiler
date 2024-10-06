@@ -1,5 +1,5 @@
 compiler: lex.yy.c compiler.tab.c compiler.o stack.o compiler.h
-	gcc lex.yy.c compiler.tab.c compiler.o stack.o -o compiler -ll -lc
+	gcc lex.yy.c compiler.tab.c compiler.o stack.o -o compiler -ll -lc -lm
 
 lex.yy.c: compiler.l compiler.h
 	flex compiler.l

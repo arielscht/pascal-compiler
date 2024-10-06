@@ -83,6 +83,13 @@ typedef struct var_entry
   int offset;
 } var_entry;
 
+typedef struct label_entry
+{
+  struct label_entry *prev;
+  struct label_entry *next;
+  char *label;
+} label_entry;
+
 /* -------------------------------------------------------------------
  * global variables
  * ------------------------------------------------------------------- */
