@@ -172,18 +172,14 @@ expression:
 simple_expression:
                      simple_expression PLUS term
                      {
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         check_exp_type(INTEGER);
                         add_exp_entry(INTEGER);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         generate_code(NULL, "SOMA");
                      }
                      | simple_expression MINUS term
                      {
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         check_exp_type(INTEGER);
                         add_exp_entry(INTEGER);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         generate_code(NULL, "SUBT");
                      }
                      | term
@@ -192,18 +188,14 @@ simple_expression:
 term: 
                      term MULTIPLY factor
                      {
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         check_exp_type(INTEGER);
                         add_exp_entry(INTEGER);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         generate_code(NULL, "MULT");
                      }
                      | term DIVIDE factor
                      {
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         check_exp_type(INTEGER);
                         add_exp_entry(INTEGER);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         generate_code(NULL, "DIVI");
                      }
                      | factor
@@ -213,7 +205,6 @@ factor:
                      NUMBER
                      {
                         add_exp_entry(INTEGER);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         sprintf(buffer, "CRCT %s", token);
                         generate_code(NULL, buffer);
                      }
@@ -222,7 +213,6 @@ factor:
                         symbol_entry *symbol;
                         symbol = search_var(token);
                         add_exp_entry(symbol->type);
-                        stack_print("Expressions stack\n", exp_stack, print_exp_entry);
                         sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
                         generate_code(NULL, buffer);
                      }
@@ -317,12 +307,16 @@ int set_var_types(var_type type) {
 void add_exp_entry(var_type type) 
 {
    exp_entry *entry = malloc(sizeof(exp_entry));
+   entry->prev = NULL;
+   entry->next = NULL;
    entry->type = type;
    stack_push(&exp_stack, (stack_elem_t *)entry);
 }
 
 void add_symbol(symbol_category category, var_type type, char *identifier) {
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
+   symbol->prev = NULL;
+   symbol->next = NULL;
    symbol->category = category;
    strncpy(symbol->identifier, token, TOKEN_SIZE);
    symbol->offset = offset;

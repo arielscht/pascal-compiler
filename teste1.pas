@@ -4,6 +4,9 @@ var m,n,o :  integer;
 begin    
     m := 15;
     n := 10;
-    p := m + n;
+    o := m + n;
+    o := o - 1;
+    m := o * m;
+    n := o / m;
 end.
 
