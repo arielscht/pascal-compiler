@@ -73,7 +73,19 @@ block:
                         add_var_entry();
                      }
                      vars_declaration
+                     {
+                        lexical_level += 1;
+                     }
                      compound_command
+                     {
+                        var_entry *entry;
+                        entry = (var_entry *)stack_pop(&var_stack);
+                        sprintf(buffer, "DMEM %d", entry->num_vars);
+                        generate_code(NULL, buffer);
+                        free(entry);
+                        lexical_level -= 1;
+                        stack_remove(&symbol_table, check_lexical_level);
+                     }
 ;
 
 vars_declaration: 
@@ -135,19 +147,7 @@ identifiers_list:
 ;
 
 compound_command: 
-                     {
-                        lexical_level += 1;
-                     }
                      T_BEGIN commands T_END
-                     {
-                        var_entry *entry;
-                        entry = (var_entry *)stack_pop(&var_stack);
-                        sprintf(buffer, "DMEM %d", entry->num_vars);
-                        generate_code(NULL, buffer);
-                        free(entry);
-                        lexical_level -= 1;
-                        stack_remove(&symbol_table, check_lexical_level);
-                     }
 ;
 
 commands:
@@ -163,7 +163,7 @@ command:
 
 no_label_command:             
                      assignment
-                     | compound_command
+                     | compound_command 
                      | loop
 ;
 

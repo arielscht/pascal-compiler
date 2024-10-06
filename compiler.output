@@ -18,7 +18,7 @@ Terminals unused in grammar
     INTDIV
 
 
-State 27 conflicts: 2 shift/reduce, 2 reduce/reduce
+State 26 conflicts: 3 shift/reduce, 1 reduce/reduce
 
 
 Grammar
@@ -31,27 +31,27 @@ Grammar
 
     3 $@2: %empty
 
-    4 block: $@2 vars_declaration compound_command
+    4 $@3: %empty
 
-    5 vars_declaration: VAR declare_vars
-    6                 | %empty
+    5 block: $@2 vars_declaration $@3 compound_command
 
-    7 declare_vars: declare_vars declare_var
-    8             | declare_var
+    6 vars_declaration: VAR declare_vars
+    7                 | %empty
 
-    9 declare_var: var_list COLON type SEMICOLON
+    8 declare_vars: declare_vars declare_var
+    9             | declare_var
 
-   10 type: IDENTIFIER
+   10 declare_var: var_list COLON type SEMICOLON
 
-   11 var_list: var_list COMMA IDENTIFIER
-   12         | IDENTIFIER
+   11 type: IDENTIFIER
 
-   13 identifiers_list: identifiers_list COMMA IDENTIFIER
-   14                 | IDENTIFIER
+   12 var_list: var_list COMMA IDENTIFIER
+   13         | IDENTIFIER
 
-   15 $@3: %empty
+   14 identifiers_list: identifiers_list COMMA IDENTIFIER
+   15                 | IDENTIFIER
 
-   16 compound_command: $@3 T_BEGIN commands T_END
+   16 compound_command: T_BEGIN commands T_END
 
    17 commands: commands command SEMICOLON
    18         | command SEMICOLON
@@ -106,14 +106,14 @@ Terminals, with rules where they appear
     CLOSE_PARENTHESIS (260) 2 43
     OPEN_BRACKETS (261)
     CLOSE_BRACKETS (262)
-    COMMA (263) 11 13
-    SEMICOLON (264) 2 9 17 18 20
-    COLON (265) 9
+    COMMA (263) 12 14
+    SEMICOLON (264) 2 10 17 18 20
+    COLON (265) 10
     DOT (266) 2
     T_BEGIN (267) 16
     T_END (268) 16
-    VAR (269) 5
-    IDENTIFIER (270) 2 10 11 12 13 14 26 42
+    VAR (269) 6
+    IDENTIFIER (270) 2 11 12 13 14 15 26 42
     ASSIGNMENT (271) 26
     NUMBER (272) 20 41
     LABEL (273)
@@ -155,35 +155,35 @@ Nonterminals, with rules where they appear
         on left: 1
         on right: 2
     block (47)
-        on left: 4
+        on left: 5
         on right: 2
     $@2 (48)
         on left: 3
-        on right: 4
-    vars_declaration (49)
-        on left: 5 6
-        on right: 4
-    declare_vars (50)
-        on left: 7 8
-        on right: 5 7
-    declare_var (51)
-        on left: 9
-        on right: 7 8
-    type (52)
+        on right: 5
+    $@3 (49)
+        on left: 4
+        on right: 5
+    vars_declaration (50)
+        on left: 6 7
+        on right: 5
+    declare_vars (51)
+        on left: 8 9
+        on right: 6 8
+    declare_var (52)
         on left: 10
-        on right: 9
-    var_list (53)
-        on left: 11 12
-        on right: 9 11
-    identifiers_list (54)
-        on left: 13 14
-        on right: 2 13
-    compound_command (55)
+        on right: 8 9
+    type (53)
+        on left: 11
+        on right: 10
+    var_list (54)
+        on left: 12 13
+        on right: 10 12
+    identifiers_list (55)
+        on left: 14 15
+        on right: 2 14
+    compound_command (56)
         on left: 16
-        on right: 4 23
-    $@3 (56)
-        on left: 15
-        on right: 16
+        on right: 5 23
     commands (57)
         on left: 17 18 19
         on right: 16 17
@@ -281,15 +281,15 @@ State 6
 
 State 7
 
-   14 identifiers_list: IDENTIFIER .
+   15 identifiers_list: IDENTIFIER .
 
-    $default  reduce using rule 14 (identifiers_list)
+    $default  reduce using rule 15 (identifiers_list)
 
 
 State 8
 
     2 program: $@1 PROGRAM IDENTIFIER OPEN_PARENTHESIS identifiers_list . CLOSE_PARENTHESIS SEMICOLON block DOT
-   13 identifiers_list: identifiers_list . COMMA IDENTIFIER
+   14 identifiers_list: identifiers_list . COMMA IDENTIFIER
 
     CLOSE_PARENTHESIS  shift, and go to state 9
     COMMA              shift, and go to state 10
@@ -304,7 +304,7 @@ State 9
 
 State 10
 
-   13 identifiers_list: identifiers_list COMMA . IDENTIFIER
+   14 identifiers_list: identifiers_list COMMA . IDENTIFIER
 
     IDENTIFIER  shift, and go to state 12
 
@@ -321,9 +321,9 @@ State 11
 
 State 12
 
-   13 identifiers_list: identifiers_list COMMA IDENTIFIER .
+   14 identifiers_list: identifiers_list COMMA IDENTIFIER .
 
-    $default  reduce using rule 13 (identifiers_list)
+    $default  reduce using rule 14 (identifiers_list)
 
 
 State 13
@@ -335,11 +335,11 @@ State 13
 
 State 14
 
-    4 block: $@2 . vars_declaration compound_command
+    5 block: $@2 . vars_declaration $@3 compound_command
 
     VAR  shift, and go to state 16
 
-    $default  reduce using rule 6 (vars_declaration)
+    $default  reduce using rule 7 (vars_declaration)
 
     vars_declaration  go to state 17
 
@@ -353,7 +353,7 @@ State 15
 
 State 16
 
-    5 vars_declaration: VAR . declare_vars
+    6 vars_declaration: VAR . declare_vars
 
     IDENTIFIER  shift, and go to state 18
 
@@ -364,95 +364,89 @@ State 16
 
 State 17
 
-    4 block: $@2 vars_declaration . compound_command
+    5 block: $@2 vars_declaration . $@3 compound_command
 
-    $default  reduce using rule 15 ($@3)
+    $default  reduce using rule 4 ($@3)
 
-    compound_command  go to state 22
-    $@3               go to state 23
+    $@3  go to state 22
 
 
 State 18
 
-   12 var_list: IDENTIFIER .
+   13 var_list: IDENTIFIER .
 
-    $default  reduce using rule 12 (var_list)
+    $default  reduce using rule 13 (var_list)
 
 
 State 19
 
-    5 vars_declaration: VAR declare_vars .
-    7 declare_vars: declare_vars . declare_var
+    6 vars_declaration: VAR declare_vars .
+    8 declare_vars: declare_vars . declare_var
 
     IDENTIFIER  shift, and go to state 18
 
-    $default  reduce using rule 5 (vars_declaration)
+    $default  reduce using rule 6 (vars_declaration)
 
-    declare_var  go to state 24
+    declare_var  go to state 23
     var_list     go to state 21
 
 
 State 20
 
-    8 declare_vars: declare_var .
+    9 declare_vars: declare_var .
 
-    $default  reduce using rule 8 (declare_vars)
+    $default  reduce using rule 9 (declare_vars)
 
 
 State 21
 
-    9 declare_var: var_list . COLON type SEMICOLON
-   11 var_list: var_list . COMMA IDENTIFIER
+   10 declare_var: var_list . COLON type SEMICOLON
+   12 var_list: var_list . COMMA IDENTIFIER
 
-    COMMA  shift, and go to state 25
-    COLON  shift, and go to state 26
+    COMMA  shift, and go to state 24
+    COLON  shift, and go to state 25
 
 
 State 22
 
-    4 block: $@2 vars_declaration compound_command .
+    5 block: $@2 vars_declaration $@3 . compound_command
 
-    $default  reduce using rule 4 (block)
+    T_BEGIN  shift, and go to state 26
+
+    compound_command  go to state 27
 
 
 State 23
 
-   16 compound_command: $@3 . T_BEGIN commands T_END
+    8 declare_vars: declare_vars declare_var .
 
-    T_BEGIN  shift, and go to state 27
+    $default  reduce using rule 8 (declare_vars)
 
 
 State 24
 
-    7 declare_vars: declare_vars declare_var .
-
-    $default  reduce using rule 7 (declare_vars)
-
-
-State 25
-
-   11 var_list: var_list COMMA . IDENTIFIER
+   12 var_list: var_list COMMA . IDENTIFIER
 
     IDENTIFIER  shift, and go to state 28
 
 
-State 26
+State 25
 
-    9 declare_var: var_list COLON . type SEMICOLON
+   10 declare_var: var_list COLON . type SEMICOLON
 
     IDENTIFIER  shift, and go to state 29
 
     type  go to state 30
 
 
-State 27
+State 26
 
-   16 compound_command: $@3 T_BEGIN . commands T_END
+   16 compound_command: T_BEGIN . commands T_END
 
+    T_BEGIN     shift, and go to state 26
     IDENTIFIER  shift, and go to state 31
     NUMBER      shift, and go to state 32
 
-    T_BEGIN     reduce using rule 15 ($@3)
     T_BEGIN     [reduce using rule 19 (commands)]
     IDENTIFIER  [reduce using rule 19 (commands)]
     NUMBER      [reduce using rule 19 (commands)]
@@ -461,7 +455,6 @@ State 27
     $default    reduce using rule 19 (commands)
 
     compound_command  go to state 33
-    $@3               go to state 23
     commands          go to state 34
     command           go to state 35
     no_label_command  go to state 36
@@ -470,23 +463,30 @@ State 27
     $@5               go to state 39
 
 
+State 27
+
+    5 block: $@2 vars_declaration $@3 compound_command .
+
+    $default  reduce using rule 5 (block)
+
+
 State 28
 
-   11 var_list: var_list COMMA IDENTIFIER .
+   12 var_list: var_list COMMA IDENTIFIER .
 
-    $default  reduce using rule 11 (var_list)
+    $default  reduce using rule 12 (var_list)
 
 
 State 29
 
-   10 type: IDENTIFIER .
+   11 type: IDENTIFIER .
 
-    $default  reduce using rule 10 (type)
+    $default  reduce using rule 11 (type)
 
 
 State 30
 
-    9 declare_var: var_list COLON type . SEMICOLON
+   10 declare_var: var_list COLON type . SEMICOLON
 
     SEMICOLON  shift, and go to state 40
 
@@ -516,18 +516,17 @@ State 33
 
 State 34
 
-   16 compound_command: $@3 T_BEGIN commands . T_END
+   16 compound_command: T_BEGIN commands . T_END
    17 commands: commands . command SEMICOLON
 
+    T_BEGIN     shift, and go to state 26
     T_END       shift, and go to state 43
     IDENTIFIER  shift, and go to state 31
     NUMBER      shift, and go to state 32
 
-    WHILE     reduce using rule 44 ($@5)
-    $default  reduce using rule 15 ($@3)
+    $default  reduce using rule 44 ($@5)
 
     compound_command  go to state 33
-    $@3               go to state 23
     command           go to state 44
     no_label_command  go to state 36
     assignment        go to state 37
@@ -572,9 +571,9 @@ State 39
 
 State 40
 
-    9 declare_var: var_list COLON type SEMICOLON .
+   10 declare_var: var_list COLON type SEMICOLON .
 
-    $default  reduce using rule 9 (declare_var)
+    $default  reduce using rule 10 (declare_var)
 
 
 State 41
@@ -588,13 +587,12 @@ State 42
 
    20 command: NUMBER SEMICOLON . no_label_command
 
+    T_BEGIN     shift, and go to state 26
     IDENTIFIER  shift, and go to state 31
 
-    WHILE     reduce using rule 44 ($@5)
-    $default  reduce using rule 15 ($@3)
+    $default  reduce using rule 44 ($@5)
 
     compound_command  go to state 33
-    $@3               go to state 23
     no_label_command  go to state 48
     assignment        go to state 37
     loop              go to state 38
@@ -603,7 +601,7 @@ State 42
 
 State 43
 
-   16 compound_command: $@3 T_BEGIN commands T_END .
+   16 compound_command: T_BEGIN commands T_END .
 
     $default  reduce using rule 16 (compound_command)
 
@@ -904,13 +902,12 @@ State 72
 
    46 loop: $@5 WHILE expression $@6 DO . no_label_command
 
+    T_BEGIN     shift, and go to state 26
     IDENTIFIER  shift, and go to state 31
 
-    WHILE     reduce using rule 44 ($@5)
-    $default  reduce using rule 15 ($@3)
+    $default  reduce using rule 44 ($@5)
 
     compound_command  go to state 33
-    $@3               go to state 23
     no_label_command  go to state 83
     assignment        go to state 37
     loop              go to state 38
