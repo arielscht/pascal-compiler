@@ -1,12 +1,4 @@
      INPP
-     AMEM 5
-     CRCT 15
-     AMRZ 0,0
-     CRCT 10
-     AMRZ 0,1
-     CRVL 0,0
-     CRVL 0,1
-     CMDG
-     AMRZ 0,3
-     DMEM 5
+     AMEM 3
+     DMEM 3
      PARA

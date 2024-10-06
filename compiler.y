@@ -150,6 +150,7 @@ compound_command:
 commands:
                      commands command SEMICOLON
                      | command SEMICOLON
+                     | /* empty */
 ;
 
 command:             
