@@ -44,6 +44,11 @@ symbol_entry *var_to_assign;
 
 %}
 
+%define parse.error verbose
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
 %token PROGRAM OPEN_PARENTHESIS CLOSE_PARENTHESIS
 %token OPEN_BRACKETS CLOSE_BRACKETS
 %token COMMA SEMICOLON COLON DOT
@@ -151,9 +156,8 @@ compound_command:
 ;
 
 commands:
-                     commands command SEMICOLON
-                     | command SEMICOLON
-                     | /* empty */
+                     commands SEMICOLON command
+                     | command
 ;
 
 command:
@@ -164,7 +168,9 @@ command:
 no_label_command:             
                      assignment
                      | compound_command 
+                     | conditional
                      | loop
+                     | /* empty */
 ;
 
 assignment:
@@ -281,7 +287,48 @@ factor:
                      | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
 ;
 
+conditional:
+                        if_then else_condition
+                        {
+                           label_entry *entry;
+
+                           entry = (label_entry *)label_stack->top;
+                           generate_code(entry->label, "NADA");
+
+                           remove_labels(2);
+                        }
+;
+
+if_then:
+                     IF expression
+                     {
+                        add_labels(2);
+                        label_entry *entry;
+
+                        entry = (label_entry *)label_stack->top->prev;
+                        sprintf(buffer, "DSVF %s", entry->label);
+                        generate_code(NULL, buffer);
+                     } 
+                     THEN no_label_command
+                     {
+                        label_entry *entry;
+
+                        entry = (label_entry *)label_stack->top;
+                        sprintf(buffer, "DSVS %s", entry->label);
+                        generate_code(NULL, buffer);
+
+                        entry = (label_entry *)label_stack->top->prev;
+                        generate_code(entry->label, "NADA");
+                     }
+;
+
+else_condition:
+                     ELSE no_label_command
+                     | %prec LOWER_THAN_ELSE
+;
+
 loop:
+                     WHILE 
                      {
                         label_entry *entry;
 
@@ -290,7 +337,7 @@ loop:
                         sprintf(buffer, "NADA");
                         generate_code(entry->label, buffer);
                      }
-                     WHILE expression 
+                     expression 
                      {
                         label_entry *entry;
                         entry = (label_entry *)label_stack->top;
