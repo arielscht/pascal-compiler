@@ -123,6 +123,7 @@ int stack_update(stack_t **stack, int check_elem(void *), void update_elem(void 
 
 int stack_remove(stack_t **stack, int check_elem(void *))
 {
+    int removed_qty = 0;
     stack_elem_t *cur_element, *elem_to_delete;
     cur_element = (*stack)->top;
 
@@ -144,12 +145,18 @@ int stack_remove(stack_t **stack, int check_elem(void *))
             if (elem_to_delete->next)
                 elem_to_delete->next->prev = elem_to_delete->prev;
 
+            if (elem_to_delete == (*stack)->top)
+            {
+                (*stack)->top = elem_to_delete->prev;
+            }
+
             free(elem_to_delete);
+
+            removed_qty++;
         }
     };
 
-    (*stack)->top = NULL;
-    (*stack)->size = 0;
+    (*stack)->size -= removed_qty;
 
     return 0;
 }

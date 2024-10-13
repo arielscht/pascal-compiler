@@ -15,36 +15,37 @@
 
 #define BUFFER_SIZE 100
 
-int num_vars = 0;
 int num_labels = 0;
+
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
 stack_t *exp_stack;
-stack_t *var_stack;
+stack_t *block_stack;
 stack_t *label_stack;
 
 void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
 void print_label_entry(void *ptr);
-void add_symbol(symbol_category category, var_type type, char *identifier);
+void add_var(char *identifier, var_type type);
+void add_proc(char *identifier, char *label);
 int set_var_types(var_type type);
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
-int check_lexical_level(void *ptr);
+int check_symbol_to_remove(void *ptr);
 symbol_entry *search_var(char *identifier);
+symbol_entry *search_proc(char *identifier);
 void check_exp_det_type(var_type type);
 void check_exp_types();
 void add_exp_entry(var_type type);
-void add_var_entry();
+void add_block_entry();
 void add_labels(int quantity);
 void remove_labels(int quantity);
 
 char *symbol_to_find;
+char identifier_to_find[TOKEN_SIZE];
 symbol_entry *var_to_assign;
 
 %}
-
-%define parse.error verbose
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -75,28 +76,41 @@ program:
 
 block:
                      {
-                        add_var_entry();
+                        add_block_entry();
+                        lexical_level += 1;
                      }
                      vars_declaration
+                     subroutines_declaration
                      {
-                        lexical_level += 1;
+                        block_entry *entry = (block_entry *)block_stack->top;
+                        label_entry *label = (label_entry *)label_stack->top;
+
+                        if(entry->skip_subroutines == 0) {
+                           generate_code(label->label, "NADA");
+
+                           remove_labels(1);
+                        }
                      }
                      compound_command
                      {
-                        var_entry *entry;
-                        entry = (var_entry *)stack_pop(&var_stack);
-                        sprintf(buffer, "DMEM %d", entry->num_vars);
-                        generate_code(NULL, buffer);
+                        block_entry * entry = (block_entry *)stack_pop(&block_stack);
+
+                        if(entry->num_vars > 0) {
+                           sprintf(buffer, "DMEM %d", entry->num_vars);
+                           generate_code(NULL, buffer);
+                        }
+
                         free(entry);
+                        stack_remove(&symbol_table, check_symbol_to_remove);
+
                         lexical_level -= 1;
-                        stack_remove(&symbol_table, check_lexical_level);
                      }
 ;
 
 vars_declaration: 
                      VAR declare_vars
                      {
-                        var_entry *entry = (var_entry*)var_stack->top;
+                        block_entry *entry = (block_entry*)block_stack->top;
                         sprintf(buffer, "AMEM %d", entry->num_vars);
                         generate_code(NULL, buffer);
                      }
@@ -130,20 +144,92 @@ type:
 ;
 
 var_list: 
-                     var_list COMMA IDENTIFIER
+                     var_list COMMA var_ident
+                     | var_ident
+                     
+;
+
+var_ident:              
+                     IDENTIFIER 
                      {
-                        add_symbol(SIMPLE_VAR, UNKNOWN, token);
-                        var_entry *entry = (var_entry*)var_stack->top;
+                        add_var(token, UNKNOWN);
+                        block_entry *entry = (block_entry*)block_stack->top;
                         entry->num_vars += 1;
                         entry->offset += 1;
                      }
-                     | IDENTIFIER 
+;
+
+subroutines_declaration:
+                     subroutines_declaration subroutine_declaration SEMICOLON
+                     | 
                      {
-                        add_symbol(SIMPLE_VAR, UNKNOWN, token);
-                        var_entry *entry = (var_entry*)var_stack->top;
-                        entry->num_vars += 1;
-                        entry->offset += 1;
+                        block_entry *entry = (block_entry *)block_stack->top;
+                        label_entry *label;
+
+                        if(entry->skip_subroutines == 1) {
+                           add_labels(1);
+
+                           label = (label_entry *)label_stack->top;
+
+                           sprintf(buffer, "DSVS %s", label->label);
+                           generate_code(NULL, buffer);
+
+                           entry->skip_subroutines = 0;
+                        }
                      }
+                     subroutine_declaration SEMICOLON
+                     | /* empty */
+;
+
+subroutine_declaration:
+                     procedure_declaration
+                     | function_declaration
+;
+
+procedure_declaration: 
+                     PROCEDURE IDENTIFIER
+                     {
+                        label_entry *entry;
+                        add_labels(1);
+
+                        entry = (label_entry *)label_stack->top;
+                        add_proc(token, entry->label);
+
+                        sprintf(buffer, "ENPR %d", lexical_level + 1);
+                        generate_code(entry->label, buffer);
+
+                        remove_labels(1);
+                     }
+                     procedure_parameters SEMICOLON block
+                     {
+                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, 0);
+                        generate_code(NULL, buffer);
+                     }
+;
+
+procedure_parameters:
+                     formal_parameters
+                     | /* empty */
+;
+
+function_declaration:
+                     FUNCTION IDENTIFIER
+;
+
+formal_parameters:
+                     OPEN_PARENTHESIS formal_parameters_list CLOSE_PARENTHESIS
+;
+
+formal_parameters_list:
+                     formal_parameters_list SEMICOLON formal_parameters_section
+                     | formal_parameters_section
+;
+
+formal_parameters_section:
+                     VAR identifiers_list COLON type
+                     | identifiers_list COLON type
+                     | FUNCTION identifiers_list COLON type
+                     | PROCEDURE identifiers_list
 ;
 
 identifiers_list: 
@@ -167,21 +253,26 @@ command:
 
 no_label_command:             
                      assignment
+                     | procedure_call
                      | compound_command 
                      | conditional
                      | loop
                      | /* empty */
 ;
 
+left_identifier: 
+                     IDENTIFIER 
+                     {
+                        strncpy(identifier_to_find, token, TOKEN_SIZE);
+                     }
+;  
+
 assignment:
-                     IDENTIFIER
+                     left_identifier ASSIGNMENT expression 
                      {
                         symbol_entry *symbol;
-                        symbol = search_var(token);
+                        symbol = search_var(identifier_to_find);
                         var_to_assign = symbol;
-                     }
-                     ASSIGNMENT expression 
-                     {
                         sprintf(buffer, "AMRZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
                         generate_code(NULL, buffer);
                         exp_entry *entry;
@@ -285,6 +376,26 @@ factor:
                         generate_code(NULL, buffer);
                      }
                      | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
+;
+
+procedure_call:
+                     procedure_ident
+                     | procedure_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
+;
+
+procedure_ident:
+                     left_identifier
+                     {
+                        symbol_entry *symbol;
+                        symbol = search_proc(identifier_to_find);
+                        sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
+                        generate_code(NULL, buffer);
+                     }
+;
+
+expressions_list:
+                     expressions_list COMMA expression
+                     | expression
 ;
 
 conditional:
@@ -393,11 +504,11 @@ void check_exp_det_type(var_type type) {
 
 symbol_entry *search_symbol(char *identifier) {
    symbol_entry *symbol;
-   symbol_to_find = token;
+   symbol_to_find = identifier;
    symbol = (symbol_entry *)stack_search(symbol_table, check_symbol);
 
    if(symbol == NULL) {
-      sprintf(buffer, "%s is not defined.", token);
+      sprintf(buffer, "%s is not defined.", identifier);
       print_error(buffer);
    }
 
@@ -410,6 +521,18 @@ symbol_entry *search_var(char *identifier) {
 
    if(symbol && symbol->category != SIMPLE_VAR) {
       sprintf(buffer, "%s is not a simple var.", token);
+      print_error(buffer);
+   };
+
+   return symbol;
+}
+
+symbol_entry *search_proc(char *identifier) {
+   symbol_entry *symbol;
+   symbol = search_symbol(identifier);
+
+   if(symbol && symbol->category != PROC) {
+      sprintf(buffer, "%s is not a procedure.", token);
       print_error(buffer);
    };
 
@@ -440,18 +563,27 @@ int check_unknown_type(void *ptr) {
    return 0;
 }
 
-int check_lexical_level(void *ptr) {
+int check_symbol_to_remove(void *ptr) {
    symbol_entry *elem = ptr;
 
    if(!elem) {
       return 0;
    }
 
-   if(elem->lexical_level == lexical_level) {
-      return 1;
+   switch(elem->category) {
+      case SIMPLE_VAR:
+         if(elem->lexical_level == lexical_level) {
+            return 1;
+         }
+         return 0;
+      case PROC:
+         if(elem->lexical_level == lexical_level + 1) {
+            return 1;
+         }
+         return 0;
+      default:
+         return 0;
    }
-
-   return 0;
 }
 
 int update_type(symbol_entry **symbol, var_type type) { 
@@ -480,13 +612,14 @@ void add_exp_entry(var_type type)
    stack_push(&exp_stack, (stack_elem_t *)entry);
 }
 
-void add_var_entry() {
-   var_entry *entry = malloc(sizeof(var_entry));
+void add_block_entry() {
+   block_entry *entry = malloc(sizeof(block_entry));
    entry->prev = NULL;
    entry->next = NULL;
    entry->num_vars = 0;
    entry->offset = 0;
-   stack_push(&var_stack, (stack_elem_t*)entry);
+   entry->skip_subroutines = 1;
+   stack_push(&block_stack, (stack_elem_t*)entry);
 }
 
 void add_label() {
@@ -526,17 +659,28 @@ void remove_labels(int quantity) {
    }
 }
 
-void add_symbol(symbol_category category, var_type type, char *identifier) {
-   var_entry *entry = (var_entry*)var_stack->top;
+void add_symbol(char *identifier, symbol_category category, var_type type, int offset, int lexical_level, char *label) {
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->prev = NULL;
    symbol->next = NULL;
    symbol->category = category;
-   strncpy(symbol->identifier, token, TOKEN_SIZE);
-   symbol->offset = entry->offset;
+   strncpy(symbol->identifier, identifier, TOKEN_SIZE);
+   if(label != NULL) {
+      strncpy(symbol->label, label, TOKEN_SIZE);
+   }
+   symbol->offset = offset;
    symbol->lexical_level = lexical_level;
    symbol->type = type;
    stack_push(&symbol_table, (stack_elem_t *)symbol);
+}
+
+void add_var(char *identifier, var_type type) {
+   block_entry *entry = (block_entry*)block_stack->top;
+   add_symbol(identifier, SIMPLE_VAR, type, entry->offset, lexical_level, NULL);
+}
+
+void add_proc(char *identifier, char *label) {
+   add_symbol(identifier, PROC, UNKNOWN, -1, lexical_level + 1, label);
 }
 
 void print_symbol(void *ptr)
@@ -546,7 +690,7 @@ void print_symbol(void *ptr)
     if (!elem)
         return;
 
-   printf("id: %s, c: %d, t: %d, ll: %d, o: %d\n", elem->identifier, elem->category, elem->type, elem->lexical_level, elem->offset);
+   printf("id: %s, c: %d, t: %d, ll: %d, o: %d, lb: %s\n", elem->identifier, elem->category, elem->type, elem->lexical_level, elem->offset, elem->label);
 }
 
 void print_exp_entry(void *ptr) 
@@ -591,19 +735,17 @@ int main (int argc, char** argv) {
  * ------------------------------------------------------------------- */
    symbol_table = malloc(sizeof(stack_t));
    exp_stack = malloc(sizeof(stack_t));
-   var_stack = malloc(sizeof(stack_t));
+   block_stack = malloc(sizeof(stack_t));
    label_stack = malloc(sizeof(stack_t));
 
-   lexical_level = 0;
-   offset = 0;
-
+   lexical_level = -1;
 
    yyin=fp;
    yyparse();
 
    free(symbol_table);
    free(exp_stack);
-   free(var_stack);
+   free(block_stack);
    free(label_stack);
 
    return 0;

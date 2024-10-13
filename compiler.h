@@ -48,6 +48,7 @@ typedef enum symbols
 typedef enum symbol_category
 {
   SIMPLE_VAR,
+  PROC,
 } symbol_category;
 
 typedef enum var_type
@@ -63,6 +64,7 @@ typedef struct symbol_entry
   struct symbol_entry *next;
   symbol_category category;
   char identifier[TOKEN_SIZE];
+  char label[TOKEN_SIZE];
   int lexical_level;
   int offset;
   var_type type;
@@ -75,13 +77,14 @@ typedef struct exp_entry
   var_type type;
 } exp_entry;
 
-typedef struct var_entry
+typedef struct block_entry
 {
-  struct var_entry *prev;
-  struct var_entry *next;
+  struct block_entry *prev;
+  struct block_entry *next;
   int num_vars;
   int offset;
-} var_entry;
+  int skip_subroutines;
+} block_entry;
 
 typedef struct label_entry
 {
@@ -97,7 +100,6 @@ typedef struct label_entry
 extern symbols symbol, relation;
 extern char token[TOKEN_SIZE];
 extern int lexical_level;
-extern int offset;
 extern int num_lines;
 
 /* -------------------------------------------------------------------

@@ -2,3 +2,6 @@ stack
 *.o
 compiler
 compiler.output
+compiler.tab.c
+compiler.tab.h
+lex.yy.c
