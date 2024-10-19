@@ -3,6 +3,10 @@
      DSVS R00
 R01: ENPR 1 
      AMEM 2
+     CRVL 1,-5
+     CRVL 1,-4
+     SOMA
+     AMRZ 1,0
      DMEM 2
      RTPR 1,0
 R02: ENPR 1 
@@ -37,6 +41,8 @@ R06: NADA
 R03: NADA 
 R04: NADA 
      CHPR R01, 0
+     CRVL 0,0
+     CRVL 0,1
      CHPR R02, 0
      DMEM 3
      PARA

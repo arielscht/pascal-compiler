@@ -17,6 +17,8 @@ typedef struct stack_t
     int size;
 } stack_t;
 
+stack_t *stack_init();
+
 int stack_size(stack_t *stack);
 
 void stack_print(char *name, stack_t *stack, void print_elem(void *));

@@ -5,6 +5,20 @@
 
 #include "stack.h"
 
+stack_t *stack_init()
+{
+    stack_t *stack;
+
+    stack = malloc(sizeof(stack_t));
+    if (stack != NULL)
+    {
+        stack->top = NULL;
+        stack->size = 0;
+    }
+
+    return stack;
+}
+
 int stack_size(stack_t *stack)
 {
     return stack->size;
@@ -21,14 +35,15 @@ void stack_print(char *name, stack_t *stack, void print_elem(void *))
         return;
     }
 
-    printf("%s", name);
+    if (name != NULL)
+    {
+        printf("%s", name);
+    }
     do
     {
         print_elem(cur_element);
         cur_element = cur_element->prev;
     } while (cur_element != NULL);
-
-    printf("\n");
 }
 
 int stack_push(stack_t **stack, stack_elem_t *elem)

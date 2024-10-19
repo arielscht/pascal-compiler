@@ -15,8 +15,6 @@
 
 #define BUFFER_SIZE 100
 
-int num_labels = 0;
-
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
 stack_t *exp_stack;
@@ -27,12 +25,16 @@ void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
 void print_label_entry(void *ptr);
 void add_var(char *identifier, var_type type);
-void add_proc(char *identifier, char *label);
-int set_var_types(var_type type);
+symbol_entry *add_proc(char *identifier, char *label);
+void add_param(char *identifier, passing_type p_type);
+void add_subroutine_param(var_type type, passing_type pass_type);
+int set_symbol_types(var_type type);
+int set_params_offset();
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
 int check_symbol_to_remove(void *ptr);
 symbol_entry *search_var(char *identifier);
+symbol_entry *search_var_or_param(char *identifier) ;
 symbol_entry *search_proc(char *identifier);
 void check_exp_det_type(var_type type);
 void check_exp_types();
@@ -41,9 +43,13 @@ void add_block_entry();
 void add_labels(int quantity);
 void remove_labels(int quantity);
 
+int num_labels;
 char *symbol_to_find;
 char identifier_to_find[TOKEN_SIZE];
 symbol_entry *var_to_assign;
+passing_type pass_type;
+var_type param_type;
+symbol_entry *cur_proc;
 
 %}
 
@@ -67,11 +73,16 @@ program:
                         generate_code(NULL, "INPP");
                      }
                      PROGRAM IDENTIFIER
-                     OPEN_PARENTHESIS identifiers_list CLOSE_PARENTHESIS SEMICOLON
+                     OPEN_PARENTHESIS program_identifiers_list CLOSE_PARENTHESIS SEMICOLON
                      block DOT 
                      {
                         generate_code(NULL, "PARA");
                      }
+;
+
+program_identifiers_list:
+                     program_identifiers_list COMMA IDENTIFIER
+                     | IDENTIFIER
 ;
 
 block:
@@ -131,10 +142,12 @@ type:
                      {
                         stack_print("Table of symbols\n", symbol_table, print_symbol);
                         if(strcmp(token, "integer") == 0) {
-                           set_var_types(INTEGER);
+                           set_symbol_types(INTEGER);
+                           param_type = INTEGER;
                            stack_print("Table of symbols\n", symbol_table, print_symbol);
                         } else if(strcmp(token, "boolean") == 0) {
-                           set_var_types(BOOLEAN);
+                           set_symbol_types(BOOLEAN);
+                           param_type = BOOLEAN;
                            stack_print("Table of symbols\n", symbol_table, print_symbol);
                         } else {
                            sprintf(buffer, "Unknown type %s", token);
@@ -190,34 +203,39 @@ procedure_declaration:
                      PROCEDURE IDENTIFIER
                      {
                         label_entry *entry;
+
                         add_labels(1);
 
                         entry = (label_entry *)label_stack->top;
-                        add_proc(token, entry->label);
+                        cur_proc = add_proc(token, entry->label);
 
                         sprintf(buffer, "ENPR %d", lexical_level + 1);
                         generate_code(entry->label, buffer);
 
                         remove_labels(1);
                      }
-                     procedure_parameters SEMICOLON block
+                     subroutine_parameters SEMICOLON block
                      {
                         sprintf(buffer, "RTPR %d,%d", lexical_level + 1, 0);
                         generate_code(NULL, buffer);
                      }
 ;
 
-procedure_parameters:
+function_declaration:
+                     FUNCTION IDENTIFIER subroutine_parameters COLON IDENTIFIER SEMICOLON block
+;
+
+subroutine_parameters:
                      formal_parameters
                      | /* empty */
 ;
 
-function_declaration:
-                     FUNCTION IDENTIFIER
-;
-
 formal_parameters:
-                     OPEN_PARENTHESIS formal_parameters_list CLOSE_PARENTHESIS
+                     OPEN_PARENTHESIS formal_parameters_list 
+                     {
+                        set_params_offset();
+                     }
+                     CLOSE_PARENTHESIS
 ;
 
 formal_parameters_list:
@@ -226,15 +244,30 @@ formal_parameters_list:
 ;
 
 formal_parameters_section:
-                     VAR identifiers_list COLON type
-                     | identifiers_list COLON type
-                     | FUNCTION identifiers_list COLON type
-                     | PROCEDURE identifiers_list
+                     VAR 
+                     { 
+                        pass_type = REFERENCE;
+                     } 
+                     param_identifiers_list COLON type
+                     | FUNCTION param_identifiers_list COLON type
+                     | PROCEDURE param_identifiers_list
+                     | 
+                     {
+                        pass_type = VALUE;
+                     }
+                     param_identifiers_list COLON type
 ;
 
-identifiers_list: 
-                     identifiers_list COMMA IDENTIFIER
-                     | IDENTIFIER
+param_identifiers_list: 
+                     param_identifiers_list COMMA param_ident
+                     | param_ident
+;
+
+param_ident:         
+                     IDENTIFIER
+                     {
+                        add_param(token, pass_type);
+                     }
 ;
 
 compound_command: 
@@ -370,7 +403,7 @@ factor:
                      | IDENTIFIER
                      {
                         symbol_entry *symbol;
-                        symbol = search_var(token);
+                        symbol = search_var_or_param(token);
                         add_exp_entry(symbol->type);
                         sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
                         generate_code(NULL, buffer);
@@ -379,8 +412,15 @@ factor:
 ;
 
 procedure_call:
-                     procedure_ident
-                     | procedure_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
+                     procedure_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
+                     | procedure_ident
+                     {
+                        int num_params = stack_size(cur_proc->params);
+                        if(num_params > 0) {
+                           sprintf(buffer, "procedure %s requires %d arguments to be passed.\n", cur_proc->identifier, num_params);
+                           print_error(buffer);
+                        }
+                     }
 ;
 
 procedure_ident:
@@ -390,6 +430,7 @@ procedure_ident:
                         symbol = search_proc(identifier_to_find);
                         sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
                         generate_code(NULL, buffer);
+                        cur_proc = symbol;
                      }
 ;
 
@@ -527,6 +568,18 @@ symbol_entry *search_var(char *identifier) {
    return symbol;
 }
 
+symbol_entry *search_var_or_param(char *identifier) {
+   symbol_entry *symbol;
+   symbol = search_symbol(identifier);
+
+   if(symbol && symbol->category != SIMPLE_VAR && symbol->category != FORMAL_PARAM) {
+      sprintf(buffer, "%s is not a simple var nor a formal param.", token);
+      print_error(buffer);
+   };
+
+   return symbol;
+}
+
 symbol_entry *search_proc(char *identifier) {
    symbol_entry *symbol;
    symbol = search_symbol(identifier);
@@ -556,7 +609,7 @@ int check_unknown_type(void *ptr) {
       return 0;
    }
 
-   if(elem->type == UNKNOWN) {
+   if((elem->category == SIMPLE_VAR || elem->category == FORMAL_PARAM) && elem->type == UNKNOWN) {
       return 1;
    }
 
@@ -586,18 +639,44 @@ int check_symbol_to_remove(void *ptr) {
    }
 }
 
-int update_type(symbol_entry **symbol, var_type type) { 
-   (*symbol)->type = type; 
+int check_no_offset_param(void *ptr) {
+    symbol_entry *elem = ptr;
+
+   if(!elem) {
+      return 0;
+   }
+
+   if(elem->category == FORMAL_PARAM && elem->offset == -1) {
+      return 1;
+   }
+
+   return 0;
 }
 
-int set_var_types(var_type type) {
+int set_symbol_types(var_type type) {
    symbol_entry *symbol;
 
    symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
 
    while(symbol != NULL) {
-      update_type(&symbol, type);
+      symbol->type = type;
       symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
+   }
+
+   return 0;
+}
+
+int set_params_offset() {
+   symbol_entry *symbol;
+   int offset = -4;
+
+   symbol = (symbol_entry *)stack_search(symbol_table, check_no_offset_param);
+
+   while(symbol != NULL) {
+      add_subroutine_param(symbol->type, symbol->pass_type);
+      symbol->offset = offset;
+      offset -= 1;
+      symbol = (symbol_entry *)stack_search(symbol_table, check_no_offset_param);
    }
 
    return 0;
@@ -659,28 +738,103 @@ void remove_labels(int quantity) {
    }
 }
 
-void add_symbol(char *identifier, symbol_category category, var_type type, int offset, int lexical_level, char *label) {
+symbol_entry *add_symbol(char *identifier, symbol_category category, var_type type, passing_type p_type, int offset, int lexical_level, char *label) {
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->prev = NULL;
    symbol->next = NULL;
    symbol->category = category;
-   strncpy(symbol->identifier, identifier, TOKEN_SIZE);
-   if(label != NULL) {
-      strncpy(symbol->label, label, TOKEN_SIZE);
-   }
    symbol->offset = offset;
    symbol->lexical_level = lexical_level;
    symbol->type = type;
+   symbol->pass_type = p_type;
+   strncpy(symbol->identifier, identifier, TOKEN_SIZE);
+
+   if(label != NULL) {
+      strncpy(symbol->label, label, TOKEN_SIZE);
+   }
+
+   if(category == PROC) {
+      symbol->params = stack_init();
+   } else {
+      symbol->params = NULL;
+   }
+
+
    stack_push(&symbol_table, (stack_elem_t *)symbol);
+
+   return symbol;
 }
 
 void add_var(char *identifier, var_type type) {
    block_entry *entry = (block_entry*)block_stack->top;
-   add_symbol(identifier, SIMPLE_VAR, type, entry->offset, lexical_level, NULL);
+   add_symbol(identifier, SIMPLE_VAR, type, -1, entry->offset, lexical_level, NULL);
 }
 
-void add_proc(char *identifier, char *label) {
-   add_symbol(identifier, PROC, UNKNOWN, -1, lexical_level + 1, label);
+symbol_entry *add_proc(char *identifier, char *label) {
+   symbol_entry *proc_entry;
+   proc_entry = add_symbol(identifier, PROC, UNKNOWN, -1, -1, lexical_level + 1, label);
+
+   return proc_entry;
+}
+
+void add_subroutine_param(var_type type, passing_type pass_type) {
+   param_entry *param = malloc(sizeof(param_entry));
+   param->prev = NULL;
+   param->next = NULL;
+   param->type = type;
+   param->pass_type = pass_type;
+
+   if(cur_proc != NULL) {
+      stack_push(&cur_proc->params, (stack_elem_t *)param);
+   }
+}
+
+void add_param(char *identifier, passing_type p_type) {
+   add_symbol(identifier, FORMAL_PARAM, UNKNOWN, p_type, -1, lexical_level + 1, NULL);
+}
+
+char *parse_symbol_category(symbol_category category) {
+   switch(category) {
+      case SIMPLE_VAR: 
+         return "sv";
+      case PROC:
+         return "proc";
+      case FORMAL_PARAM:
+         return "fp";
+      default:
+         return "unk";
+   }
+}
+
+char *parse_passing_type(passing_type type) {
+   switch(type) {
+      case REFERENCE:
+         return "ref";
+      case VALUE:
+         return "val";
+      default:
+         return "unk";
+   }
+}
+
+char *parse_var_type(var_type type) {
+   switch(type) {
+      case BOOLEAN:
+         return "bool";
+      case INTEGER:
+         return "int";
+      default:
+         return "unk";
+   }
+}
+
+void print_param(void *ptr) {
+   param_entry *elem = ptr;
+
+   if(!elem)
+      return;
+
+   printf("{%s, %s}", parse_var_type(elem->type), parse_passing_type(elem->pass_type));
 }
 
 void print_symbol(void *ptr)
@@ -690,7 +844,15 @@ void print_symbol(void *ptr)
     if (!elem)
         return;
 
-   printf("id: %s, c: %d, t: %d, ll: %d, o: %d, lb: %s\n", elem->identifier, elem->category, elem->type, elem->lexical_level, elem->offset, elem->label);
+   printf("id: %s, cat: %4s, type: %4s, pass_type: %4s, lex_level: %2d, offset: %2d, label: %3s", elem->identifier, parse_symbol_category(elem->category), parse_var_type(elem->type), parse_passing_type(elem->pass_type), elem->lexical_level, elem->offset, elem->label);
+
+   if(elem->params) {
+      printf(", params: %d[", stack_size(elem->params));
+      stack_print(NULL, elem->params, print_param);
+      printf("]");
+   }
+
+   printf("\n");
 }
 
 void print_exp_entry(void *ptr) 
@@ -733,12 +895,16 @@ int main (int argc, char** argv) {
 /* -------------------------------------------------------------------
  *  Start symbols table
  * ------------------------------------------------------------------- */
-   symbol_table = malloc(sizeof(stack_t));
-   exp_stack = malloc(sizeof(stack_t));
-   block_stack = malloc(sizeof(stack_t));
-   label_stack = malloc(sizeof(stack_t));
+   symbol_table = stack_init();
+   exp_stack = stack_init();
+   block_stack = stack_init();
+   label_stack = stack_init();
 
    lexical_level = -1;
+   pass_type = -1;
+   num_labels = 0;
+   param_type = UNKNOWN;
+   cur_proc = NULL;
 
    yyin=fp;
    yyparse();

@@ -1,3 +1,5 @@
+#include "stack.h"
+
 #define TOKEN_SIZE 16
 
 typedef enum symbols
@@ -49,14 +51,29 @@ typedef enum symbol_category
 {
   SIMPLE_VAR,
   PROC,
+  FORMAL_PARAM,
 } symbol_category;
 
 typedef enum var_type
 {
+  UNKNOWN = -1,
   INTEGER,
   BOOLEAN,
-  UNKNOWN,
 } var_type;
+
+typedef enum passing_type
+{
+  VALUE,
+  REFERENCE,
+} passing_type;
+
+typedef struct param_entry
+{
+  struct param_entry *prev;
+  struct param_entry *next;
+  var_type type;
+  passing_type pass_type;
+} param_entry;
 
 typedef struct symbol_entry
 {
@@ -68,6 +85,8 @@ typedef struct symbol_entry
   int lexical_level;
   int offset;
   var_type type;
+  passing_type pass_type;
+  stack_t *params;
 } symbol_entry;
 
 typedef struct exp_entry

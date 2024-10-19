@@ -1,8 +1,9 @@
 program exemplo75 (input, output);
     var m, n, o:  integer;
-    procedure p;
+    procedure p(t, u: integer);
         var a, b: integer;
     begin
+        a := t + u;
     end;
     procedure q;
         var c, d: integer;
@@ -16,6 +17,6 @@ begin
         if (n > 2) then 
             n := n - 1;
     end;
-    p;
+    p(m, n);
     q;
 end.
