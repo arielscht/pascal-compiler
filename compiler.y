@@ -456,10 +456,18 @@ if_then:
                      {
                         add_labels(2);
                         label_entry *entry;
+                        exp_entry *exp;
+
+                        exp = (exp_entry *)stack_pop(&exp_stack);
+                        if(exp->type != BOOLEAN) {
+                           print_error("The IF expression must be of boolean type.");
+                        }
 
                         entry = (label_entry *)label_stack->top->prev;
                         sprintf(buffer, "DSVF %s", entry->label);
                         generate_code(NULL, buffer);
+
+                        free(exp);
                      } 
                      THEN no_label_command
                      {
@@ -492,10 +500,17 @@ loop:
                      expression 
                      {
                         label_entry *entry;
+                        exp_entry *exp;
                         entry = (label_entry *)label_stack->top;
+
+                        exp = (exp_entry *)stack_pop(&exp_stack);
+                        if(exp->type != BOOLEAN) {
+                           print_error("The WHILE expression must be of boolean type.");
+                        }
 
                         sprintf(buffer, "DSVF %s", entry->label);
                         generate_code(NULL, buffer);
+                        free(exp);
                      } 
                      DO no_label_command
                      {
