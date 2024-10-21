@@ -306,7 +306,7 @@ assignment:
                         symbol_entry *symbol;
                         symbol = search_var(identifier_to_find);
                         var_to_assign = symbol;
-                        sprintf(buffer, "AMRZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
+                        sprintf(buffer, "ARMZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
                         generate_code(NULL, buffer);
                         exp_entry *entry;
                         entry = (exp_entry *)stack_pop(&exp_stack);
