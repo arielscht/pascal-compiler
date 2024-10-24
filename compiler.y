@@ -216,7 +216,9 @@ procedure_declaration:
                      }
                      subroutine_parameters SEMICOLON block
                      {
-                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, 0);
+                        symbol_entry *entry = (symbol_entry *)symbol_table->top;
+
+                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, stack_size(entry->params));
                         generate_code(NULL, buffer);
                      }
 ;
@@ -646,6 +648,11 @@ int check_symbol_to_remove(void *ptr) {
          return 0;
       case PROC:
          if(elem->lexical_level == lexical_level + 1) {
+            return 1;
+         }
+         return 0;
+      case FORMAL_PARAM:
+         if(elem->lexical_level == lexical_level) {
             return 1;
          }
          return 0;
