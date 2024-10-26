@@ -20,6 +20,7 @@ stack_t *symbol_table;
 stack_t *exp_stack;
 stack_t *block_stack;
 stack_t *label_stack;
+stack_t *proc_call_stack;
 
 void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
@@ -42,6 +43,9 @@ void add_exp_entry(var_type type);
 void add_block_entry();
 void add_labels(int quantity);
 void remove_labels(int quantity);
+void handle_procedure_call();
+void add_proc_call();
+char *parse_var_type(var_type type);
 
 int num_labels;
 char *symbol_to_find;
@@ -415,30 +419,33 @@ factor:
 
 procedure_call:
                      procedure_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
+                     {
+                        handle_procedure_call();
+                     }
                      | procedure_ident
                      {
-                        int num_params = stack_size(cur_proc->params);
-                        if(num_params > 0) {
-                           sprintf(buffer, "procedure %s requires %d arguments to be passed.\n", cur_proc->identifier, num_params);
-                           print_error(buffer);
-                        }
+                        handle_procedure_call();
                      }
 ;
 
-procedure_ident:
+procedure_ident: 
                      left_identifier
                      {
-                        symbol_entry *symbol;
-                        symbol = search_proc(identifier_to_find);
-                        sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
-                        generate_code(NULL, buffer);
-                        cur_proc = symbol;
+                        add_proc_call();
                      }
 ;
 
 expressions_list:
-                     expressions_list COMMA expression
+                     expressions_list COMMA expression 
+                     {
+                        proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
+                        entry->num_args += 1;
+                     }
                      | expression
+                     {
+                        proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
+                        entry->num_args += 1;
+                     }
 ;
 
 conditional:
@@ -529,6 +536,41 @@ loop:
 ;
 
 %%
+
+void handle_procedure_call() {
+   proc_call_entry *call_entry;
+   symbol_entry *symbol;
+   exp_entry *exp;
+   param_entry *param;
+   int required_params, i;
+   
+   symbol = search_proc(identifier_to_find);
+   call_entry = (proc_call_entry *)stack_pop(&proc_call_stack);
+   required_params = stack_size(symbol->params);
+
+   if(call_entry->num_args != required_params) {
+      sprintf(buffer, "procedure %s requires %d arguments and %d were passed.\n", cur_proc->identifier, required_params, call_entry->num_args);
+      print_error(buffer);
+   }
+
+   if(required_params > 0) {
+      param = (param_entry *)symbol->params->top;
+      for(i = required_params - 1; i >= 0; i--) {
+         exp = (exp_entry*)stack_pop(&exp_stack);
+
+         if(exp->type != param->type) {
+            sprintf(buffer, "Argument at position %d expected a %s type but got a %s type.", i, parse_var_type(param->type), parse_var_type(exp->type));
+            print_error(buffer);
+         }
+         param = param->prev;
+      }
+   }
+
+   sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
+   generate_code(NULL, buffer);
+
+   free(call_entry);
+}
 
 void check_exp_types() {
    exp_entry *left_exp, *right_exp;
@@ -648,6 +690,8 @@ int check_symbol_to_remove(void *ptr) {
          return 0;
       case PROC:
          if(elem->lexical_level == lexical_level + 1) {
+            stack_clear(&elem->params);
+            free(elem->params);
             return 1;
          }
          return 0;
@@ -702,6 +746,14 @@ int set_params_offset() {
    }
 
    return 0;
+}
+
+void add_proc_call() {
+   proc_call_entry *entry = malloc(sizeof(proc_call_entry));
+   entry->prev = NULL;
+   entry->next = NULL;
+   entry->num_args = 0;
+   stack_push(&proc_call_stack, (stack_elem_t *)entry);
 }
 
 void add_exp_entry(var_type type) 
@@ -921,6 +973,7 @@ int main (int argc, char** argv) {
    exp_stack = stack_init();
    block_stack = stack_init();
    label_stack = stack_init();
+   proc_call_stack = stack_init();
 
    lexical_level = -1;
    pass_type = -1;
@@ -935,6 +988,7 @@ int main (int argc, char** argv) {
    free(exp_stack);
    free(block_stack);
    free(label_stack);
+   free(proc_call_stack);
 
    return 0;
 }

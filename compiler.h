@@ -112,6 +112,13 @@ typedef struct label_entry
   char *label;
 } label_entry;
 
+typedef struct proc_call_entry
+{
+  struct proc_call_entry *prev;
+  struct proc_call_entry *next;
+  int num_args;
+} proc_call_entry;
+
 /* -------------------------------------------------------------------
  * global variables
  * ------------------------------------------------------------------- */

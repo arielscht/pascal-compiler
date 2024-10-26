@@ -33,4 +33,6 @@ int stack_update(stack_t **stack, int check_elem(void *), void update_elem(void 
 
 int stack_remove(stack_t **stack, int check_elem(void *));
 
+int stack_clear(stack_t **stack);
+
 #endif

@@ -1,5 +1,6 @@
 program exemplo75 (input, output);
     var m, n, o:  integer;
+        f, g: boolean;
     procedure p(t, u: integer);
         var a, b: integer;
         procedure q(v, w: integer);

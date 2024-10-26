@@ -175,3 +175,13 @@ int stack_remove(stack_t **stack, int check_elem(void *))
 
     return 0;
 }
+
+int clear_item(void *ptr)
+{
+    return 1;
+}
+
+int stack_clear(stack_t **stack)
+{
+    stack_remove(stack, clear_item);
+}
