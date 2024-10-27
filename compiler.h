@@ -61,6 +61,14 @@ typedef enum var_type
   BOOLEAN,
 } var_type;
 
+typedef enum exp_category
+{
+  VAR_EXP,
+  PARAM_EXP,
+  CONST_EXP,
+  EXP,
+} exp_category;
+
 typedef enum passing_type
 {
   VALUE,
@@ -93,6 +101,7 @@ typedef struct exp_entry
   struct exp_entry *prev;
   struct exp_entry *next;
   var_type type;
+  exp_category category;
 } exp_entry;
 
 typedef struct block_entry

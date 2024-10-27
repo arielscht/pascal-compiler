@@ -13,7 +13,7 @@
 #include "compiler.h"
 #include "stack.h"
 
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 200
 
 char buffer[BUFFER_SIZE];
 stack_t *symbol_table;
@@ -38,13 +38,14 @@ symbol_entry *search_var_or_param(char *identifier) ;
 symbol_entry *search_proc(char *identifier);
 void check_exp_det_type(var_type type);
 void check_exp_types();
-void add_exp_entry(var_type type);
+void add_exp_entry(var_type type, exp_category category);
 void add_block_entry();
 void add_labels(int quantity);
 void remove_labels(int quantity);
 void handle_procedure_call();
 void add_proc_call();
 char *parse_var_type(var_type type);
+void handle_procedure_arg();
 
 int num_labels;
 char *symbol_to_find;
@@ -336,37 +337,37 @@ relation:
                      EQUAL simple_expression
                      {
                         check_exp_types();
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMIG");
                      }
                      | NOT_EQUAL simple_expression
                      {
                         check_exp_types();
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMDG");
                      }
                      | LESS simple_expression
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMME");
                      }
                      | LESS_EQUAL simple_expression
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMEG");
                      }
                      | GREATER_EQUAL simple_expression
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMAG");
                      }
                      | GREATER simple_expression
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(BOOLEAN);
+                        add_exp_entry(BOOLEAN, EXP);
                         generate_code(NULL, "CMMA");
                      }
 ;
@@ -375,13 +376,13 @@ simple_expression:
                      simple_expression PLUS term
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(INTEGER);
+                        add_exp_entry(INTEGER, EXP);
                         generate_code(NULL, "SOMA");
                      }
                      | simple_expression MINUS term
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(INTEGER);
+                        add_exp_entry(INTEGER, EXP);
                         generate_code(NULL, "SUBT");
                      }
                      | term
@@ -391,13 +392,13 @@ term:
                      term MULTIPLY factor
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(INTEGER);
+                        add_exp_entry(INTEGER, EXP);
                         generate_code(NULL, "MULT");
                      }
                      | term DIVIDE factor
                      {
                         check_exp_det_type(INTEGER);
-                        add_exp_entry(INTEGER);
+                        add_exp_entry(INTEGER, EXP);
                         generate_code(NULL, "DIVI");
                      }
                      | factor
@@ -406,7 +407,7 @@ term:
 factor:
                      NUMBER
                      {
-                        add_exp_entry(INTEGER);
+                        add_exp_entry(INTEGER, CONST_EXP);
                         sprintf(buffer, "CRCT %s", token);
                         generate_code(NULL, buffer);
                      }
@@ -415,8 +416,7 @@ factor:
                         proc_call_entry *proc_entry;
                         symbol_entry *symbol;
                         symbol = search_var_or_param(token);
-                        add_exp_entry(symbol->type);
-
+                        add_exp_entry(symbol->type, symbol->category == SIMPLE_VAR ? VAR_EXP : PARAM_EXP);
 
                         proc_entry = (proc_call_entry *)proc_call_stack->top;
                         if(proc_entry != NULL){ // The expression is in a procedure/function call
@@ -467,15 +467,11 @@ procedure_ident:
 expressions_list:
                      expressions_list COMMA expression 
                      {
-                        proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
-                        entry->num_args += 1;
-                        entry->cur_arg += 1;
+                        handle_procedure_arg();
                      }
                      | expression
                      {
-                        proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
-                        entry->num_args += 1;
-                        entry->cur_arg += 1;
+                        handle_procedure_arg();
                      }
 ;
 
@@ -568,10 +564,34 @@ loop:
 
 %%
 
+void handle_procedure_arg() {
+   exp_entry *exp;
+   proc_call_entry *entry;
+   param_entry *cur_param;
+
+   entry = (proc_call_entry *)proc_call_stack->top;
+   cur_param = &entry->proc->params[entry->cur_arg];
+   exp = (exp_entry*)stack_pop(&exp_stack);
+
+   if(cur_param->pass_type == REFERENCE) {
+      if(exp->category != VAR_EXP && exp->category != PARAM_EXP) {
+         sprintf(buffer, "Error calling subroutine %s: argument at position %d must be a variable or formal param.", entry->proc->identifier, entry->cur_arg);
+         print_error(buffer);
+      }
+   }
+
+   if(cur_param->type != exp->type) {
+      sprintf(buffer, "Error calling subroutine %s: argument at position %d expected a %s type but got a %s type.", entry->proc->identifier, entry->cur_arg, parse_var_type(cur_param->type), parse_var_type(exp->type));
+      print_error(buffer);
+   }
+
+   entry->num_args += 1;
+   entry->cur_arg += 1;
+}
+
 void handle_procedure_call() {
    proc_call_entry *call_entry;
    symbol_entry *symbol;
-   exp_entry *exp;
    int i;
    
    call_entry = (proc_call_entry *)stack_pop(&proc_call_stack);
@@ -580,17 +600,6 @@ void handle_procedure_call() {
    if(call_entry->num_args != symbol->num_params) {
       sprintf(buffer, "procedure %s requires %d arguments and %d were passed.\n", symbol->identifier, symbol->num_params, call_entry->num_args);
       print_error(buffer);
-   }
-
-   if(symbol->num_params > 0) {
-      for(i = symbol->num_params - 1; i >= 0; i--) {
-         exp = (exp_entry*)stack_pop(&exp_stack);
-
-         if(exp->type != symbol->params[i].type) {
-            sprintf(buffer, "Error calling subroutine %s: argument at position %d expected a %s type but got a %s type.", symbol->identifier, i, parse_var_type(symbol->params[i].type), parse_var_type(exp->type));
-            print_error(buffer);
-         }
-      }
    }
 
    sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
@@ -800,12 +809,13 @@ void add_proc_call() {
    stack_push(&proc_call_stack, (stack_elem_t *)entry);
 }
 
-void add_exp_entry(var_type type) 
+void add_exp_entry(var_type type, exp_category category) 
 {
    exp_entry *entry = malloc(sizeof(exp_entry));
    entry->prev = NULL;
    entry->next = NULL;
    entry->type = type;
+   entry->category = category;
    stack_push(&exp_stack, (stack_elem_t *)entry);
 }
 
