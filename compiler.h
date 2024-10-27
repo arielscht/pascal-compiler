@@ -117,6 +117,7 @@ typedef struct proc_call_entry
   struct proc_call_entry *next;
   symbol_entry *proc;
   int num_args;
+  int cur_arg;
 } proc_call_entry;
 
 /* -------------------------------------------------------------------

@@ -417,10 +417,28 @@ factor:
                         symbol = search_var_or_param(token);
                         add_exp_entry(symbol->type);
 
-                        if(symbol->pass_type == REFERENCE) {
-                           sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+
+                        proc_entry = (proc_call_entry *)proc_call_stack->top;
+                        if(proc_entry != NULL){ // The expression is in a procedure/function call
+                           if(proc_entry->proc->params[proc_entry->cur_arg].pass_type == VALUE) {
+                              if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
+                                 sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                              } else {
+                                 sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                              }
+                           } else {
+                              if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
+                                 sprintf(buffer, "CREN %d,%d", symbol->lexical_level, symbol->offset);
+                              } else {
+                                 sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                              }
+                           }
                         } else {
-                           sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                           if(symbol->pass_type == REFERENCE) {
+                              sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                           } else {
+                              sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                           }
                         }
                         
                         generate_code(NULL, buffer);
@@ -451,11 +469,13 @@ expressions_list:
                      {
                         proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
                         entry->num_args += 1;
+                        entry->cur_arg += 1;
                      }
                      | expression
                      {
                         proc_call_entry *entry = (proc_call_entry *)proc_call_stack->top;
                         entry->num_args += 1;
+                        entry->cur_arg += 1;
                      }
 ;
 
@@ -775,6 +795,7 @@ void add_proc_call() {
    entry->prev = NULL;
    entry->next = NULL;
    entry->num_args = 0;
+   entry->cur_arg = 0;
    entry->proc = symbol;
    stack_push(&proc_call_stack, (stack_elem_t *)entry);
 }
