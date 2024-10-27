@@ -28,7 +28,6 @@ void print_label_entry(void *ptr);
 void add_var(char *identifier, var_type type);
 symbol_entry *add_proc(char *identifier, char *label);
 void add_param(char *identifier, passing_type p_type);
-void add_subroutine_param(var_type type, passing_type pass_type);
 int set_symbol_types(var_type type);
 int set_params_offset();
 int (*get_symbol_checker(char *symbol))(void *);
@@ -50,7 +49,6 @@ char *parse_var_type(var_type type);
 int num_labels;
 char *symbol_to_find;
 char identifier_to_find[TOKEN_SIZE];
-symbol_entry *var_to_assign;
 passing_type pass_type;
 var_type param_type;
 symbol_entry *cur_proc;
@@ -222,7 +220,7 @@ procedure_declaration:
                      {
                         symbol_entry *entry = (symbol_entry *)symbol_table->top;
 
-                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, stack_size(entry->params));
+                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, entry->num_params);
                         generate_code(NULL, buffer);
                      }
 ;
@@ -310,15 +308,21 @@ assignment:
                      left_identifier ASSIGNMENT expression 
                      {
                         symbol_entry *symbol;
-                        symbol = search_var(identifier_to_find);
-                        var_to_assign = symbol;
-                        sprintf(buffer, "ARMZ %d,%d", var_to_assign->lexical_level, var_to_assign->offset);
-                        generate_code(NULL, buffer);
                         exp_entry *entry;
                         entry = (exp_entry *)stack_pop(&exp_stack);
-                        if(entry->type != var_to_assign->type) {
+                        symbol = search_var_or_param(identifier_to_find);
+
+                        if(entry->type != symbol->type) {
                            print_error("Type mismatch.");
                         }
+
+                        if(symbol->pass_type == REFERENCE) {
+                           sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
+                        } else {
+                           sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
+                        }
+
+                        generate_code(NULL, buffer);
                         free(entry);
                      }
 ;
@@ -407,11 +411,18 @@ factor:
                         generate_code(NULL, buffer);
                      }
                      | IDENTIFIER
-                     {
+                     {  
+                        proc_call_entry *proc_entry;
                         symbol_entry *symbol;
                         symbol = search_var_or_param(token);
                         add_exp_entry(symbol->type);
-                        sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+
+                        if(symbol->pass_type == REFERENCE) {
+                           sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                        } else {
+                           sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                        }
+                        
                         generate_code(NULL, buffer);
                      }
                      | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
@@ -541,28 +552,24 @@ void handle_procedure_call() {
    proc_call_entry *call_entry;
    symbol_entry *symbol;
    exp_entry *exp;
-   param_entry *param;
-   int required_params, i;
+   int i;
    
-   symbol = search_proc(identifier_to_find);
    call_entry = (proc_call_entry *)stack_pop(&proc_call_stack);
-   required_params = stack_size(symbol->params);
+   symbol = call_entry->proc;
 
-   if(call_entry->num_args != required_params) {
-      sprintf(buffer, "procedure %s requires %d arguments and %d were passed.\n", cur_proc->identifier, required_params, call_entry->num_args);
+   if(call_entry->num_args != symbol->num_params) {
+      sprintf(buffer, "procedure %s requires %d arguments and %d were passed.\n", symbol->identifier, symbol->num_params, call_entry->num_args);
       print_error(buffer);
    }
 
-   if(required_params > 0) {
-      param = (param_entry *)symbol->params->top;
-      for(i = required_params - 1; i >= 0; i--) {
+   if(symbol->num_params > 0) {
+      for(i = symbol->num_params - 1; i >= 0; i--) {
          exp = (exp_entry*)stack_pop(&exp_stack);
 
-         if(exp->type != param->type) {
-            sprintf(buffer, "Argument at position %d expected a %s type but got a %s type.", i, parse_var_type(param->type), parse_var_type(exp->type));
+         if(exp->type != symbol->params[i].type) {
+            sprintf(buffer, "Error calling subroutine %s: argument at position %d expected a %s type but got a %s type.", symbol->identifier, i, parse_var_type(symbol->params[i].type), parse_var_type(exp->type));
             print_error(buffer);
          }
-         param = param->prev;
       }
    }
 
@@ -690,8 +697,9 @@ int check_symbol_to_remove(void *ptr) {
          return 0;
       case PROC:
          if(elem->lexical_level == lexical_level + 1) {
-            stack_clear(&elem->params);
-            free(elem->params);
+            if(elem->num_params > 0) {
+               free(elem->params);
+            }
             return 1;
          }
          return 0;
@@ -734,25 +742,40 @@ int set_symbol_types(var_type type) {
 
 int set_params_offset() {
    symbol_entry *symbol;
+   int i;
    int offset = -4;
 
-   symbol = (symbol_entry *)stack_search(symbol_table, check_no_offset_param);
-
-   while(symbol != NULL) {
-      add_subroutine_param(symbol->type, symbol->pass_type);
-      symbol->offset = offset;
-      offset -= 1;
+   if(cur_proc->num_params > 0) {
+      cur_proc->params = calloc(cur_proc->num_params, sizeof(param_entry));
+      i = cur_proc->num_params - 1;
+      
       symbol = (symbol_entry *)stack_search(symbol_table, check_no_offset_param);
+
+      while(symbol != NULL) {
+         cur_proc->params[i].type = symbol->type;
+         cur_proc->params[i].pass_type = symbol->pass_type;
+         symbol->offset = offset;
+         offset -= 1;
+         i -= 1;
+         symbol = (symbol_entry *)stack_search(symbol_table, check_no_offset_param);
+      }
    }
+
 
    return 0;
 }
 
 void add_proc_call() {
-   proc_call_entry *entry = malloc(sizeof(proc_call_entry));
+   proc_call_entry *entry;
+   symbol_entry *symbol;
+
+   symbol = search_proc(identifier_to_find);
+
+   entry = malloc(sizeof(proc_call_entry));
    entry->prev = NULL;
    entry->next = NULL;
    entry->num_args = 0;
+   entry->proc = symbol;
    stack_push(&proc_call_stack, (stack_elem_t *)entry);
 }
 
@@ -816,23 +839,18 @@ symbol_entry *add_symbol(char *identifier, symbol_category category, var_type ty
    symbol_entry *symbol = malloc(sizeof(symbol_entry));
    symbol->prev = NULL;
    symbol->next = NULL;
+   symbol->params = NULL;
    symbol->category = category;
    symbol->offset = offset;
    symbol->lexical_level = lexical_level;
    symbol->type = type;
    symbol->pass_type = p_type;
+   symbol->num_params = 0;
    strncpy(symbol->identifier, identifier, TOKEN_SIZE);
 
    if(label != NULL) {
       strncpy(symbol->label, label, TOKEN_SIZE);
    }
-
-   if(category == PROC) {
-      symbol->params = stack_init();
-   } else {
-      symbol->params = NULL;
-   }
-
 
    stack_push(&symbol_table, (stack_elem_t *)symbol);
 
@@ -851,20 +869,9 @@ symbol_entry *add_proc(char *identifier, char *label) {
    return proc_entry;
 }
 
-void add_subroutine_param(var_type type, passing_type pass_type) {
-   param_entry *param = malloc(sizeof(param_entry));
-   param->prev = NULL;
-   param->next = NULL;
-   param->type = type;
-   param->pass_type = pass_type;
-
-   if(cur_proc != NULL) {
-      stack_push(&cur_proc->params, (stack_elem_t *)param);
-   }
-}
-
 void add_param(char *identifier, passing_type p_type) {
    add_symbol(identifier, FORMAL_PARAM, UNKNOWN, p_type, -1, lexical_level + 1, NULL);
+   cur_proc->num_params += 1;
 }
 
 char *parse_symbol_category(symbol_category category) {
@@ -921,8 +928,10 @@ void print_symbol(void *ptr)
    printf("id: %s, cat: %4s, type: %4s, pass_type: %4s, lex_level: %2d, offset: %2d, label: %3s", elem->identifier, parse_symbol_category(elem->category), parse_var_type(elem->type), parse_passing_type(elem->pass_type), elem->lexical_level, elem->offset, elem->label);
 
    if(elem->params) {
-      printf(", params: %d[", stack_size(elem->params));
-      stack_print(NULL, elem->params, print_param);
+      printf(", params: %d[", elem->num_params);
+      for(int i = 0; i < elem->num_params; i++) {
+         print_param(&elem->params[i]);
+      }
       printf("]");
    }
 

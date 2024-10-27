@@ -69,8 +69,6 @@ typedef enum passing_type
 
 typedef struct param_entry
 {
-  struct param_entry *prev;
-  struct param_entry *next;
   var_type type;
   passing_type pass_type;
 } param_entry;
@@ -84,9 +82,10 @@ typedef struct symbol_entry
   char label[TOKEN_SIZE];
   int lexical_level;
   int offset;
+  int num_params;
   var_type type;
   passing_type pass_type;
-  stack_t *params;
+  param_entry *params;
 } symbol_entry;
 
 typedef struct exp_entry
@@ -116,6 +115,7 @@ typedef struct proc_call_entry
 {
   struct proc_call_entry *prev;
   struct proc_call_entry *next;
+  symbol_entry *proc;
   int num_args;
 } proc_call_entry;
 

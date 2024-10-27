@@ -11,18 +11,18 @@ program exemplo75 (input, output);
     begin
         a := t + u;
     end;
-    procedure q;
+    procedure r(x: integer);
         var c, d: integer;
     begin
     end;
-begin    
+begin
     m := 5 * 1 + 2;
     n := 10;
     if (m > 5) then
     begin
-        if (n > 2) then 
+        if (n > 2) then
             n := n - 1;
     end;
     p(m, n);
-    q;
+    r(m);
 end.
