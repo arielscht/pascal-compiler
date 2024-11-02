@@ -19,5 +19,4 @@ program passRef(input, output);
 begin
     k := 0;
     p(3, k);
-    q;
 end.

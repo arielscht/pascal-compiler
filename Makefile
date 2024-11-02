@@ -1,5 +1,5 @@
-compiler: lex.yy.c compiler.tab.c compiler.o stack.o compiler.h
-	gcc lex.yy.c compiler.tab.c compiler.o stack.o -o compiler -ll -ly -lc -lm
+compiler: lex.yy.c compiler.tab.c compiler.o stack.o output_helpers.o compiler.h
+	gcc lex.yy.c compiler.tab.c compiler.o stack.o output_helpers.o -o compiler -ll -ly -lc -lm
 
 lex.yy.c: compiler.l compiler.h
 	flex compiler.l
@@ -13,5 +13,8 @@ compiler.o: compiler.h compilerF.c
 stack.o: stack.c stack.h 
 	gcc -c stack.c -o stack.o
 
+output_helpers.o: output_helpers.c output_helpers.h 
+	gcc -c output_helpers.c -o output_helpers.o
+
 clean :
-	rm -f compiler.tab.* lex.yy.c compiler.o stack.o compiler
+	rm -f compiler.tab.* lex.yy.c compiler.o stack.o output_helpers.o compiler.output compiler

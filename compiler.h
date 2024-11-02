@@ -1,3 +1,6 @@
+#ifndef __COMPILER__
+#define __COMPILER__
+
 #include "stack.h"
 
 #define TOKEN_SIZE 16
@@ -147,3 +150,5 @@ void generate_code(char *, char *);
 int print_error(char *error);
 int yylex();
 void yyerror(char *s);
+
+#endif

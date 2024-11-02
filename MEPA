@@ -38,7 +38,5 @@ R00: NADA
      CRCT 3
      CREN 0,0
      CHPR R01, 0
-     AMEM 1
-     CHPR R04, 0
      DMEM 1
      PARA
