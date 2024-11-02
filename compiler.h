@@ -71,6 +71,7 @@ typedef enum exp_category
   PARAM_EXP,
   CONST_EXP,
   EXP,
+  FUNC_EXP,
 } exp_category;
 
 typedef enum passing_type

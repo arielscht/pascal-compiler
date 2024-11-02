@@ -18,6 +18,42 @@ char *parse_symbol_category(symbol_category category)
     }
 }
 
+char *parse_symbol_category_verbose(symbol_category category)
+{
+    switch (category)
+    {
+    case SIMPLE_VAR:
+        return "simple variable";
+    case PROC:
+        return "procedure";
+    case FUNC:
+        return "function";
+    case FORMAL_PARAM:
+        return "formal parameter";
+    default:
+        return "unknown";
+    }
+}
+
+char *parse_exp_category(exp_category category)
+{
+    switch (category)
+    {
+    case VAR_EXP:
+        return "simple variable";
+    case PARAM_EXP:
+        return "foram parameter";
+    case CONST_EXP:
+        return "constant";
+    case FUNC_EXP:
+        return "function";
+    case EXP:
+        return "expression";
+    default:
+        return "unknown";
+    }
+}
+
 char *parse_passing_type(passing_type type)
 {
     switch (type)

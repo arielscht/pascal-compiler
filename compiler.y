@@ -27,9 +27,9 @@ int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
 int check_symbol_to_remove(void *ptr);
 symbol_entry *search_var(char *identifier);
-symbol_entry *search_var_or_param(char *identifier) ;
+symbol_entry *search_var_param_or_func(char *identifier) ;
 symbol_entry *search_subroutine(char *identifier);
-void check_if_procedure();
+void check_if_subroutine(symbol_category category);
 void check_exp_det_type(var_type type);
 void check_exp_types();
 void add_exp_entry(var_type type, exp_category category);
@@ -313,7 +313,7 @@ assignment:
                         symbol_entry *symbol;
                         exp_entry *entry;
                         entry = (exp_entry *)stack_pop(&exp_stack);
-                        symbol = search_var_or_param(identifier_to_find);
+                        symbol = search_var_param_or_func(identifier_to_find);
 
                         if(entry->type != symbol->type) {
                            print_error("Type mismatch.");
@@ -413,71 +413,81 @@ factor:
                         sprintf(buffer, "CRCT %s", token);
                         generate_code(NULL, buffer);
                      }
-                     | IDENTIFIER
-                     {  
+                     | left_identifier factor_with_identifier
+                     | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
+;
+
+factor_with_identifier:
+                        function_with_params
+                        | 
+                        {  
                         subroutine_call_entry *proc_entry;
                         symbol_entry *symbol;
-                        symbol = search_var_or_param(token);
-                        add_exp_entry(symbol->type, symbol->category == SIMPLE_VAR ? VAR_EXP : PARAM_EXP);
+                        symbol = search_var_param_or_func(identifier_to_find);
 
-                        proc_entry = (subroutine_call_entry *)subroutine_call_stack->top;
-                        if(proc_entry != NULL){ // The expression is in a procedure/function call
-                           if(proc_entry->subroutine->params[proc_entry->cur_arg].pass_type == VALUE) {
-                              if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
-                                 sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                        if(symbol->category == SIMPLE_VAR || symbol->category == FORMAL_PARAM) {
+                           add_exp_entry(symbol->type, symbol->category == SIMPLE_VAR ? VAR_EXP : PARAM_EXP);
+                           proc_entry = (subroutine_call_entry *)subroutine_call_stack->top;
+                           if(proc_entry != NULL){ // The expression is in a procedure/function call
+                              if(proc_entry->subroutine->params[proc_entry->cur_arg].pass_type == VALUE) {
+                                 if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
+                                    sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                                 } else {
+                                    sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                                 }
                               } else {
-                                 sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                                 if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
+                                    sprintf(buffer, "CREN %d,%d", symbol->lexical_level, symbol->offset);
+                                 } else {
+                                    sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                                 }
                               }
                            } else {
-                              if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
-                                 sprintf(buffer, "CREN %d,%d", symbol->lexical_level, symbol->offset);
+                              if(symbol->pass_type == REFERENCE) {
+                                 sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
                               } else {
                                  sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
                               }
                            }
                         } else {
-                           if(symbol->pass_type == REFERENCE) {
-                              sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
-                           } else {
-                              sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
-                           }
+                           add_subroutine_call();
+                           add_exp_entry(symbol->type, FUNC_EXP);
+                           check_if_subroutine(FUNC);
+                           handle_subroutine_call();
                         }
                         
                         generate_code(NULL, buffer);
                      }
-                     | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
-;
-
-subroutine_call:
-                     subroutine_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
-;
-
-subroutine_ident: 
-                     left_identifier
-                     {
-                        add_subroutine_call();
-                     }
 ;
 
 procedure_call:
-                     subroutine_call
+                     left_identifier OPEN_PARENTHESIS
                      {
-                        check_if_procedure();
+                        add_subroutine_call();
+                     }
+                     expressions_list CLOSE_PARENTHESIS
+                     {
+                        check_if_subroutine(PROC);
                         handle_subroutine_call();
                      }
-                     | subroutine_ident
+                     | left_identifier
                      {
-                        check_if_procedure();
+                        add_subroutine_call();
+                        check_if_subroutine(PROC);
                         handle_subroutine_call();
                      }
 ;
 
-function_call:
-                     // subroutine_call
-                     // | subroutine_ident
-                     // {
-                     //    handle_subroutine_call();
-                     // }
+function_with_params:
+                     OPEN_PARENTHESIS
+                     {
+                        add_subroutine_call();
+                     }
+                     expressions_list CLOSE_PARENTHESIS
+                     {
+                        check_if_subroutine(FUNC);
+                        handle_subroutine_call();
+                     }
 ;
 
 expressions_list:
@@ -591,7 +601,7 @@ void handle_procedure_arg() {
 
    if(cur_param->pass_type == REFERENCE) {
       if(exp->category != VAR_EXP && exp->category != PARAM_EXP) {
-         sprintf(buffer, "Error calling subroutine %s: argument at position %d must be a variable or formal param.", entry->subroutine->identifier, entry->cur_arg);
+         sprintf(buffer, "Error calling subroutine %s: argument at position %d must be a variable or formal param but got a %s.", entry->subroutine->identifier, entry->cur_arg, parse_exp_category(exp->category));
          print_error(buffer);
       }
    }
@@ -628,13 +638,21 @@ void handle_subroutine_call() {
    free(call_entry);
 }
 
-void check_if_procedure() {
+void check_if_subroutine(symbol_category category) {
    subroutine_call_entry *entry;
 
+   if(category != PROC && category != FUNC) {
+      print_error("Invalid category. Possible values are: PROC and FUNC.");
+   }
+ 
    entry = (subroutine_call_entry *)subroutine_call_stack->top;
 
-   if(entry->subroutine->category != PROC) {
-      sprintf(buffer, "%s is not a procedure.", entry->subroutine->identifier);
+   if(entry == NULL) {
+      print_error("check_if_subroutine should not be called outside subroutine call.");
+   }
+
+   if(entry->subroutine->category != category) {
+      sprintf(buffer, "%s is not a %s.", entry->subroutine->identifier, parse_symbol_category_verbose(category));
       print_error(buffer);
    }
 }
@@ -694,12 +712,13 @@ symbol_entry *search_var(char *identifier) {
    return symbol;
 }
 
-symbol_entry *search_var_or_param(char *identifier) {
+symbol_entry *search_var_param_or_func(char *identifier) {
    symbol_entry *symbol;
    symbol = search_symbol(identifier);
 
-   if(symbol && symbol->category != SIMPLE_VAR && symbol->category != FORMAL_PARAM) {
-      sprintf(buffer, "%s is not a simple var nor a formal param.", token);
+
+   if(symbol && symbol->category != SIMPLE_VAR && symbol->category != FORMAL_PARAM && symbol->category != FUNC) {
+      sprintf(buffer, "%s is not a simple var nor a formal param nor a function.", token);
       print_error(buffer);
    };
 

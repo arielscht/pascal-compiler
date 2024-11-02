@@ -19,7 +19,7 @@ R02: NADA
      CREN 1,0
      CHPR R01, 1
      CRVL 1,0
-     ARMI 1,-4
+     ARMZ 1,0
      CRVL 1,-5
      CRCT 2
      SUBT

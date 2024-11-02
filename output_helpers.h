@@ -5,6 +5,10 @@
 
 char *parse_symbol_category(symbol_category category);
 
+char *parse_symbol_category_verbose(symbol_category category);
+
+char *parse_exp_category(exp_category category);
+
 char *parse_passing_type(passing_type type);
 
 char *parse_var_type(var_type type);
