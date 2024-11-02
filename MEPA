@@ -28,11 +28,17 @@ R02: NADA
 R03: NADA 
      DMEM 1
      RTPR 1,2
+R04: ENPR 1 
+     AMEM 2
+     DMEM 2
+     RTPR 1,0
 R00: NADA 
      CRCT 0
      ARMZ 0,0
      CRCT 3
      CREN 0,0
      CHPR R01, 0
+     AMEM 1
+     CHPR R04, 0
      DMEM 1
      PARA

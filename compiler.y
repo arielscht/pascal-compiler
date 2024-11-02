@@ -1,8 +1,3 @@
-
-// Testar se funciona corretamente o empilhamento de par�metros
-// passados por valor ou por refer�ncia.
-
-
 %{
 #include <stdio.h>
 #include <ctype.h>
@@ -20,30 +15,30 @@ stack_t *symbol_table;
 stack_t *exp_stack;
 stack_t *block_stack;
 stack_t *label_stack;
-stack_t *proc_call_stack;
+stack_t *subroutine_call_stack;
 
 void print_symbol(void *ptr);
 void print_exp_entry(void *ptr);
 void print_label_entry(void *ptr);
-void add_var(char *identifier, var_type type);
-symbol_entry *add_proc(char *identifier, char *label);
+void add_var(char *identifier);
+symbol_entry *add_subroutine(char *identifier, char *label, symbol_category subroutine_type);
 void add_param(char *identifier, passing_type p_type);
-int set_symbol_types(var_type type);
+int set_symbol_types(char* type);
 int set_params_offset();
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
 int check_symbol_to_remove(void *ptr);
 symbol_entry *search_var(char *identifier);
 symbol_entry *search_var_or_param(char *identifier) ;
-symbol_entry *search_proc(char *identifier);
+symbol_entry *search_subroutine(char *identifier);
 void check_exp_det_type(var_type type);
 void check_exp_types();
 void add_exp_entry(var_type type, exp_category category);
 void add_block_entry();
 void add_labels(int quantity);
 void remove_labels(int quantity);
-void handle_procedure_call();
-void add_proc_call();
+void handle_subroutine_call();
+void add_subroutine_call();
 char *parse_var_type(var_type type);
 void handle_procedure_arg();
 
@@ -51,7 +46,6 @@ int num_labels;
 char *symbol_to_find;
 char identifier_to_find[TOKEN_SIZE];
 passing_type pass_type;
-var_type param_type;
 symbol_entry *cur_proc;
 
 %}
@@ -143,19 +137,7 @@ declare_var:
 type: 
                      IDENTIFIER
                      {
-                        stack_print("Table of symbols\n", symbol_table, print_symbol);
-                        if(strcmp(token, "integer") == 0) {
-                           set_symbol_types(INTEGER);
-                           param_type = INTEGER;
-                           stack_print("Table of symbols\n", symbol_table, print_symbol);
-                        } else if(strcmp(token, "boolean") == 0) {
-                           set_symbol_types(BOOLEAN);
-                           param_type = BOOLEAN;
-                           stack_print("Table of symbols\n", symbol_table, print_symbol);
-                        } else {
-                           sprintf(buffer, "Unknown type %s", token);
-                           print_error(buffer);
-                        }
+                        set_symbol_types(token);
                      }
 ;
 
@@ -168,7 +150,7 @@ var_list:
 var_ident:              
                      IDENTIFIER 
                      {
-                        add_var(token, UNKNOWN);
+                        add_var(token);
                         block_entry *entry = (block_entry*)block_stack->top;
                         entry->num_vars += 1;
                         entry->offset += 1;
@@ -210,7 +192,7 @@ procedure_declaration:
                         add_labels(1);
 
                         entry = (label_entry *)label_stack->top;
-                        cur_proc = add_proc(token, entry->label);
+                        cur_proc = add_subroutine(token, entry->label, PROC);
 
                         sprintf(buffer, "ENPR %d", lexical_level + 1);
                         generate_code(entry->label, buffer);
@@ -227,7 +209,29 @@ procedure_declaration:
 ;
 
 function_declaration:
-                     FUNCTION IDENTIFIER subroutine_parameters COLON IDENTIFIER SEMICOLON block
+                     FUNCTION IDENTIFIER {
+                        label_entry *entry;
+
+                        add_labels(1);
+
+                        entry = (label_entry *)label_stack->top;
+                        cur_proc = add_subroutine(token, entry->label, FUNC);
+
+                        sprintf(buffer, "ENPR %d", lexical_level + 1);
+                        generate_code(entry->label, buffer);
+
+                        remove_labels(1);
+                     }
+                     subroutine_parameters COLON IDENTIFIER {
+                        set_symbol_types(token);
+                     } 
+                     SEMICOLON block
+                     {
+                        symbol_entry *entry = (symbol_entry *)symbol_table->top;
+
+                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, entry->num_params);
+                        generate_code(NULL, buffer);
+                     }
 ;
 
 subroutine_parameters:
@@ -413,14 +417,14 @@ factor:
                      }
                      | IDENTIFIER
                      {  
-                        proc_call_entry *proc_entry;
+                        subroutine_call_entry *proc_entry;
                         symbol_entry *symbol;
                         symbol = search_var_or_param(token);
                         add_exp_entry(symbol->type, symbol->category == SIMPLE_VAR ? VAR_EXP : PARAM_EXP);
 
-                        proc_entry = (proc_call_entry *)proc_call_stack->top;
+                        proc_entry = (subroutine_call_entry *)subroutine_call_stack->top;
                         if(proc_entry != NULL){ // The expression is in a procedure/function call
-                           if(proc_entry->proc->params[proc_entry->cur_arg].pass_type == VALUE) {
+                           if(proc_entry->subroutine->params[proc_entry->cur_arg].pass_type == VALUE) {
                               if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
                                  sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
                               } else {
@@ -446,21 +450,25 @@ factor:
                      | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS
 ;
 
-procedure_call:
-                     procedure_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
+subroutine_call:
+                     subroutine_ident OPEN_PARENTHESIS expressions_list CLOSE_PARENTHESIS
                      {
-                        handle_procedure_call();
-                     }
-                     | procedure_ident
-                     {
-                        handle_procedure_call();
+                        handle_subroutine_call();
                      }
 ;
 
-procedure_ident: 
+subroutine_ident: 
                      left_identifier
                      {
-                        add_proc_call();
+                        add_subroutine_call();
+                     }
+;
+
+procedure_call:
+                     subroutine_call
+                     | subroutine_ident
+                     {
+                        handle_subroutine_call();
                      }
 ;
 
@@ -566,22 +574,22 @@ loop:
 
 void handle_procedure_arg() {
    exp_entry *exp;
-   proc_call_entry *entry;
+   subroutine_call_entry *entry;
    param_entry *cur_param;
 
-   entry = (proc_call_entry *)proc_call_stack->top;
-   cur_param = &entry->proc->params[entry->cur_arg];
+   entry = (subroutine_call_entry *)subroutine_call_stack->top;
+   cur_param = &entry->subroutine->params[entry->cur_arg];
    exp = (exp_entry*)stack_pop(&exp_stack);
 
    if(cur_param->pass_type == REFERENCE) {
       if(exp->category != VAR_EXP && exp->category != PARAM_EXP) {
-         sprintf(buffer, "Error calling subroutine %s: argument at position %d must be a variable or formal param.", entry->proc->identifier, entry->cur_arg);
+         sprintf(buffer, "Error calling subroutine %s: argument at position %d must be a variable or formal param.", entry->subroutine->identifier, entry->cur_arg);
          print_error(buffer);
       }
    }
 
    if(cur_param->type != exp->type) {
-      sprintf(buffer, "Error calling subroutine %s: argument at position %d expected a %s type but got a %s type.", entry->proc->identifier, entry->cur_arg, parse_var_type(cur_param->type), parse_var_type(exp->type));
+      sprintf(buffer, "Error calling subroutine %s: argument at position %d expected a %s type but got a %s type.", entry->subroutine->identifier, entry->cur_arg, parse_var_type(cur_param->type), parse_var_type(exp->type));
       print_error(buffer);
    }
 
@@ -589,17 +597,21 @@ void handle_procedure_arg() {
    entry->cur_arg += 1;
 }
 
-void handle_procedure_call() {
-   proc_call_entry *call_entry;
+void handle_subroutine_call() {
+   subroutine_call_entry *call_entry;
    symbol_entry *symbol;
    int i;
    
-   call_entry = (proc_call_entry *)stack_pop(&proc_call_stack);
-   symbol = call_entry->proc;
+   call_entry = (subroutine_call_entry *)stack_pop(&subroutine_call_stack);
+   symbol = call_entry->subroutine;
 
    if(call_entry->num_args != symbol->num_params) {
       sprintf(buffer, "procedure %s requires %d arguments and %d were passed.\n", symbol->identifier, symbol->num_params, call_entry->num_args);
       print_error(buffer);
+   }
+
+   if(symbol->category == FUNC) {
+      generate_code(NULL, "AMEM 1");
    }
 
    sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);
@@ -675,12 +687,12 @@ symbol_entry *search_var_or_param(char *identifier) {
    return symbol;
 }
 
-symbol_entry *search_proc(char *identifier) {
+symbol_entry *search_subroutine(char *identifier) {
    symbol_entry *symbol;
    symbol = search_symbol(identifier);
 
-   if(symbol && symbol->category != PROC) {
-      sprintf(buffer, "%s is not a procedure.", token);
+   if(symbol && symbol->category != PROC && symbol->category != FUNC) {
+      sprintf(buffer, "%s is not a subroutine.", identifier);
       print_error(buffer);
    };
 
@@ -704,7 +716,7 @@ int check_unknown_type(void *ptr) {
       return 0;
    }
 
-   if((elem->category == SIMPLE_VAR || elem->category == FORMAL_PARAM) && elem->type == UNKNOWN) {
+   if((elem->category == SIMPLE_VAR || elem->category == FORMAL_PARAM || elem->category == FUNC) && elem->type == UNKNOWN) {
       return 1;
    }
 
@@ -725,6 +737,7 @@ int check_symbol_to_remove(void *ptr) {
          }
          return 0;
       case PROC:
+      case FUNC:
          if(elem->lexical_level == lexical_level + 1) {
             if(elem->num_params > 0) {
                free(elem->params);
@@ -756,15 +769,27 @@ int check_no_offset_param(void *ptr) {
    return 0;
 }
 
-int set_symbol_types(var_type type) {
+int set_symbol_types(char* type) {
    symbol_entry *symbol;
+   var_type symbol_type;
+
+   if(strcmp(type, "integer") == 0) {
+      symbol_type = INTEGER;
+   } else if(strcmp(type, "boolean") == 0) {
+      symbol_type = BOOLEAN;
+   } else {
+      sprintf(buffer, "Unknown type %s", token);
+      print_error(buffer);
+   }
 
    symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
 
    while(symbol != NULL) {
-      symbol->type = type;
+      symbol->type = symbol_type;
       symbol = (symbol_entry *)stack_search(symbol_table, check_unknown_type);
    }
+
+   stack_print("Table of symbols\n", symbol_table, print_symbol);
 
    return 0;
 }
@@ -794,19 +819,19 @@ int set_params_offset() {
    return 0;
 }
 
-void add_proc_call() {
-   proc_call_entry *entry;
+void add_subroutine_call() {
+   subroutine_call_entry *entry;
    symbol_entry *symbol;
 
-   symbol = search_proc(identifier_to_find);
+   symbol = search_subroutine(identifier_to_find);
 
-   entry = malloc(sizeof(proc_call_entry));
+   entry = malloc(sizeof(subroutine_call_entry));
    entry->prev = NULL;
    entry->next = NULL;
    entry->num_args = 0;
    entry->cur_arg = 0;
-   entry->proc = symbol;
-   stack_push(&proc_call_stack, (stack_elem_t *)entry);
+   entry->subroutine = symbol;
+   stack_push(&subroutine_call_stack, (stack_elem_t *)entry);
 }
 
 void add_exp_entry(var_type type, exp_category category) 
@@ -888,14 +913,14 @@ symbol_entry *add_symbol(char *identifier, symbol_category category, var_type ty
    return symbol;
 }
 
-void add_var(char *identifier, var_type type) {
+void add_var(char *identifier) {
    block_entry *entry = (block_entry*)block_stack->top;
-   add_symbol(identifier, SIMPLE_VAR, type, -1, entry->offset, lexical_level, NULL);
+   add_symbol(identifier, SIMPLE_VAR, UNKNOWN, -1, entry->offset, lexical_level, NULL);
 }
 
-symbol_entry *add_proc(char *identifier, char *label) {
+symbol_entry *add_subroutine(char *identifier, char *label, symbol_category subroutine_type) {
    symbol_entry *proc_entry;
-   proc_entry = add_symbol(identifier, PROC, UNKNOWN, -1, -1, lexical_level + 1, label);
+   proc_entry = add_symbol(identifier, subroutine_type, UNKNOWN, -1, -1, lexical_level + 1, label);
 
    return proc_entry;
 }
@@ -911,6 +936,8 @@ char *parse_symbol_category(symbol_category category) {
          return "sv";
       case PROC:
          return "proc";
+      case FUNC:
+         return "func";
       case FORMAL_PARAM:
          return "fp";
       default:
@@ -1013,12 +1040,11 @@ int main (int argc, char** argv) {
    exp_stack = stack_init();
    block_stack = stack_init();
    label_stack = stack_init();
-   proc_call_stack = stack_init();
+   subroutine_call_stack = stack_init();
 
    lexical_level = -1;
    pass_type = -1;
    num_labels = 0;
-   param_type = UNKNOWN;
    cur_proc = NULL;
 
    yyin=fp;
@@ -1028,7 +1054,7 @@ int main (int argc, char** argv) {
    free(exp_stack);
    free(block_stack);
    free(label_stack);
-   free(proc_call_stack);
+   free(subroutine_call_stack);
 
    return 0;
 }

@@ -51,6 +51,7 @@ typedef enum symbol_category
 {
   SIMPLE_VAR,
   PROC,
+  FUNC,
   FORMAL_PARAM,
 } symbol_category;
 
@@ -120,14 +121,14 @@ typedef struct label_entry
   char *label;
 } label_entry;
 
-typedef struct proc_call_entry
+typedef struct subroutine_call_entry
 {
-  struct proc_call_entry *prev;
-  struct proc_call_entry *next;
-  symbol_entry *proc;
+  struct subroutine_call_entry *prev;
+  struct subroutine_call_entry *next;
+  symbol_entry *subroutine;
   int num_args;
   int cur_arg;
-} proc_call_entry;
+} subroutine_call_entry;
 
 /* -------------------------------------------------------------------
  * global variables
