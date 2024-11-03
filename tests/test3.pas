@@ -12,7 +12,7 @@ program passRef(input, output);
             p(n - 2, g);
         end;
     end;
-    function q: integer;
+    function q(n: integer): integer;
         var t, u: integer;
     begin
     end;

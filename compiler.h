@@ -96,6 +96,8 @@ typedef struct symbol_entry
   int lexical_level;
   int offset;
   int num_params;
+  int func_active;
+  int return_assigned;
   var_type type;
   passing_type pass_type;
   param_entry *params;

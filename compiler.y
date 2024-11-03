@@ -43,6 +43,7 @@ void handle_procedure_arg();
 int num_labels;
 char *symbol_to_find;
 char identifier_to_find[TOKEN_SIZE];
+char identifier_to_assign[TOKEN_SIZE];
 passing_type pass_type;
 symbol_entry *cur_proc;
 
@@ -226,6 +227,12 @@ function_declaration:
                      SEMICOLON block
                      {
                         symbol_entry *entry = (symbol_entry *)symbol_table->top;
+                        entry->func_active = 0;
+
+                        if(entry->return_assigned == 0) {
+                           sprintf(buffer, "function %s was not assigned a return value.", entry->identifier);
+                           print_error(buffer);
+                        }
 
                         sprintf(buffer, "RTPR %d,%d", lexical_level + 1, entry->num_params);
                         generate_code(NULL, buffer);
@@ -308,22 +315,37 @@ left_identifier:
 ;  
 
 assignment:
-                     left_identifier ASSIGNMENT expression 
+                     left_identifier ASSIGNMENT 
+                     {
+                        strncpy(identifier_to_assign, identifier_to_find, TOKEN_SIZE);
+                     } 
+                     expression 
                      {
                         symbol_entry *symbol;
                         exp_entry *entry;
                         entry = (exp_entry *)stack_pop(&exp_stack);
-                        symbol = search_var_param_or_func(identifier_to_find);
+                        symbol = search_var_param_or_func(identifier_to_assign);
 
                         if(entry->type != symbol->type) {
                            print_error("Type mismatch.");
                         }
 
-                        if(symbol->pass_type == REFERENCE) {
-                           sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
+                        if(symbol->category == FUNC) {
+                           if(symbol->func_active == 0) {
+                              sprintf(buffer, "You cannot assign a return value to function %s as it is not in the current execution scope.", symbol->identifier);
+                              print_error(buffer);
+                           } else {
+                              symbol->return_assigned = 1;
+                              sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, - 4 - symbol->num_params);
+                           }
                         } else {
-                           sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
+                           if(symbol->pass_type == REFERENCE) {
+                              sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
+                           } else {
+                              sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
+                           }
                         }
+
 
                         generate_code(NULL, buffer);
                         free(entry);
@@ -718,7 +740,7 @@ symbol_entry *search_var_param_or_func(char *identifier) {
 
 
    if(symbol && symbol->category != SIMPLE_VAR && symbol->category != FORMAL_PARAM && symbol->category != FUNC) {
-      sprintf(buffer, "%s is not a simple var nor a formal param nor a function.", token);
+      sprintf(buffer, "%s is not a simple var nor a formal param nor a function.", identifier);
       print_error(buffer);
    };
 
@@ -940,6 +962,14 @@ symbol_entry *add_symbol(char *identifier, symbol_category category, var_type ty
    symbol->type = type;
    symbol->pass_type = p_type;
    symbol->num_params = 0;
+   symbol->return_assigned = 0;
+   
+   if(category == FUNC) {
+      symbol->func_active = 1;
+   } else {
+      symbol->func_active = 0;
+   }
+
    strncpy(symbol->identifier, identifier, TOKEN_SIZE);
 
    if(label != NULL) {

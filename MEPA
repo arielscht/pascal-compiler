@@ -19,7 +19,7 @@ R02: NADA
      CREN 1,0
      CHPR R01, 1
      CRVL 1,0
-     ARMZ 1,0
+     ARMI 1,-4
      CRVL 1,-5
      CRCT 2
      SUBT
@@ -31,12 +31,3 @@ R03: NADA
 R04: ENPR 1 
      AMEM 2
      DMEM 2
-     RTPR 1,0
-R00: NADA 
-     CRCT 0
-     ARMZ 0,0
-     CRCT 3
-     CREN 0,0
-     CHPR R01, 0
-     DMEM 1
-     PARA
