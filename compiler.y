@@ -39,6 +39,7 @@ void remove_labels(int quantity);
 void handle_subroutine_call();
 void add_subroutine_call();
 void handle_procedure_arg();
+void handle_assignment_table(symbol_entry *symbol);
 
 int num_labels;
 char *symbol_to_find;
@@ -61,6 +62,7 @@ symbol_entry *cur_proc;
 %token IF THEN ELSE NOT OR AND WHILE DO
 %token INTDIV PLUS MINUS MULTIPLY DIVIDE
 %token EQUAL NOT_EQUAL LESS LESS_EQUAL GREATER_EQUAL GREATER
+%token READ WRITE
 
 %%
 
@@ -304,6 +306,8 @@ no_label_command:
                      | compound_command 
                      | conditional
                      | loop
+                     | read
+                     | write
                      | /* empty */
 ;
 
@@ -330,24 +334,8 @@ assignment:
                            print_error("Type mismatch.");
                         }
 
-                        if(symbol->category == FUNC) {
-                           if(symbol->func_active == 0) {
-                              sprintf(buffer, "You cannot assign a return value to function %s as it is not in the current execution scope.", symbol->identifier);
-                              print_error(buffer);
-                           } else {
-                              symbol->return_assigned = 1;
-                              sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, - 4 - symbol->num_params);
-                           }
-                        } else {
-                           if(symbol->pass_type == REFERENCE) {
-                              sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
-                           } else {
-                              sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
-                           }
-                        }
+                        handle_assignment_table(symbol);
 
-
-                        generate_code(NULL, buffer);
                         free(entry);
                      }
 ;
@@ -610,7 +598,57 @@ loop:
                      }
 ;
 
+read:
+   READ OPEN_PARENTHESIS read_list CLOSE_PARENTHESIS
+;
+
+read_list:
+   read_list COMMA read_item
+   | read_item
+
+read_item:
+   IDENTIFIER
+   {
+      symbol_entry *symbol;
+      symbol = search_var_param_or_func(token);
+
+      generate_code(NULL, "LEIT");
+      handle_assignment_table(symbol);
+   }
+
+write:
+   WRITE OPEN_PARENTHESIS write_list CLOSE_PARENTHESIS
+
+write_list:
+   write_list COMMA expression 
+   {
+      generate_code(NULL, "IMPR");
+   }
+   | expression
+   {
+      generate_code(NULL, "IMPR");
+   }
+   
 %%
+
+void handle_assignment_table(symbol_entry *symbol) {
+   if(symbol->category == FUNC) {
+      if(symbol->func_active == 0) {
+         sprintf(buffer, "You cannot assign a return value to function %s as it is not in the current execution scope.", symbol->identifier);
+         print_error(buffer);
+      } else {
+         symbol->return_assigned = 1;
+         sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, - 4 - symbol->num_params);
+      }
+   } else {
+      if(symbol->pass_type == REFERENCE) {
+         sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
+      } else {
+         sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
+      }
+   }
+   generate_code(NULL, buffer);
+}
 
 void handle_procedure_arg() {
    exp_entry *exp;
@@ -740,7 +778,7 @@ symbol_entry *search_var_param_or_func(char *identifier) {
 
 
    if(symbol && symbol->category != SIMPLE_VAR && symbol->category != FORMAL_PARAM && symbol->category != FUNC) {
-      sprintf(buffer, "%s is not a simple var nor a formal param nor a function.", identifier);
+      sprintf(buffer, "%s is not a simple var, nor a formal param, nor a function.", identifier);
       print_error(buffer);
    };
 

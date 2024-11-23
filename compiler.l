@@ -169,6 +169,20 @@ div     {
           return INTDIV;
         }
 
+read     {
+          symbol = read_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" read  ");
+          return READ;
+        }
+        
+write     {
+          symbol = write_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" write  ");
+          return WRITE;
+        }
+
 :=      { 
           symbol = assignment_symbol;
           strncpy (token, yytext, TOKEN_SIZE);

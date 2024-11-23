@@ -15,6 +15,7 @@ program passRef(input, output);
     function q(n: integer): integer;
         var t, u: integer;
     begin
+        q := 5;
     end;
 begin
     k := 0;

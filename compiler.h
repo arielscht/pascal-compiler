@@ -48,6 +48,8 @@ typedef enum symbols
   less_equal_symbol,
   greater_equal_symbol,
   greater_symbol,
+  read_symbol,
+  write_symbol,
 } symbols;
 
 typedef enum symbol_category
