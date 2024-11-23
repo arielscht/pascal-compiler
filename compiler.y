@@ -497,6 +497,7 @@ function_with_params:
                      OPEN_PARENTHESIS
                      {
                         add_subroutine_call();
+                        generate_code(NULL, "AMEM 1");
                      }
                      expressions_list CLOSE_PARENTHESIS
                      {
@@ -698,7 +699,6 @@ void handle_subroutine_call() {
    }
 
    if(symbol->category == FUNC) {
-      generate_code(NULL, "AMEM 1");
       add_exp_entry(symbol->type, FUNC_EXP);
    }
 
