@@ -605,6 +605,7 @@ read:
 read_list:
    read_list COMMA read_item
    | read_item
+;
 
 read_item:
    IDENTIFIER
@@ -615,9 +616,11 @@ read_item:
       generate_code(NULL, "LEIT");
       handle_assignment_table(symbol);
    }
+;
 
 write:
    WRITE OPEN_PARENTHESIS write_list CLOSE_PARENTHESIS
+;
 
 write_list:
    write_list COMMA expression 
@@ -628,7 +631,8 @@ write_list:
    {
       generate_code(NULL, "IMPR");
    }
-   
+;
+
 %%
 
 void handle_assignment_table(symbol_entry *symbol) {
