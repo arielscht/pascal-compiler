@@ -47,5 +47,5 @@ int print_error(char *error)
 
 void yyerror(char *s)
 {
-  fprintf(stderr, "Error: %s\n", s);
+  fprintf(stderr, "Error on line %d - %s\n", num_lines, s);
 }
