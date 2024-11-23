@@ -461,7 +461,6 @@ factor_with_identifier:
                            }
                         } else {
                            add_subroutine_call();
-                           add_exp_entry(symbol->type, FUNC_EXP);
                            check_if_subroutine(FUNC);
                            handle_subroutine_call();
                         }
@@ -694,6 +693,7 @@ void handle_subroutine_call() {
 
    if(symbol->category == FUNC) {
       generate_code(NULL, "AMEM 1");
+      add_exp_entry(symbol->type, FUNC_EXP);
    }
 
    sprintf(buffer, "CHPR %s, %d", symbol->label, lexical_level);

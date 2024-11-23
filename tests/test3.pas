@@ -19,5 +19,5 @@ program passRef(input, output);
     end;
 begin
     k := 0;
-    p(3, k);
+    p(q(3), k);
 end.
