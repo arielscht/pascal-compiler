@@ -413,6 +413,12 @@ term:
                         add_exp_entry(INTEGER, EXP);
                         generate_code(NULL, "DIVI");
                      }
+                     | term INTDIV factor
+                     {
+                        check_exp_det_type(INTEGER);
+                        add_exp_entry(INTEGER, EXP);
+                        generate_code(NULL, "DIVI");
+                     }
                      | factor
 ;
 
