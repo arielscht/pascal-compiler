@@ -13,6 +13,9 @@
 5. Executar os diffs
 > ls ./programs/Exemplo*/MEPA | xargs -I{} sh -c 'diff "{}" "$(dirname "{}")/MY_MEPA" > "$(dirname "{}")/diff.txt"'
 
+6. Limpar exemplos
+> ls ./programs/Exemplo*/MEPA | xargs -I{} sh -c 'rm "$(dirname "{}")/MY_MEPA" "$(dirname "{}")/diff.txt"'
+
 Para aqueles mais curiosos, verifiquem o arquivo lex.yy.c . Este
 arquivo é a implementação em "C" da autômato gerado pelo analisador
 léxico ao ler o arquivo "compilador.l". De forma análoga,
