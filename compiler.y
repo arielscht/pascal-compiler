@@ -204,7 +204,7 @@ procedure_declaration:
                      {
                         symbol_entry *entry = (symbol_entry *)symbol_table->top;
 
-                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, entry->num_params);
+                        sprintf(buffer, "RTPR %d, %d", lexical_level + 1, entry->num_params);
                         generate_code(NULL, buffer);
                      }
 ;
@@ -236,7 +236,7 @@ function_declaration:
                            print_error(buffer);
                         }
 
-                        sprintf(buffer, "RTPR %d,%d", lexical_level + 1, entry->num_params);
+                        sprintf(buffer, "RTPR %d, %d", lexical_level + 1, entry->num_params);
                         generate_code(NULL, buffer);
                      }
 ;
@@ -447,22 +447,22 @@ factor_with_identifier:
                            if(proc_entry != NULL){ // The expression is in a procedure/function call
                               if(proc_entry->subroutine->params[proc_entry->cur_arg].pass_type == VALUE) {
                                  if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
-                                    sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                                    sprintf(buffer, "CRVL %d, %d", symbol->lexical_level, symbol->offset);
                                  } else {
-                                    sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                                    sprintf(buffer, "CRVI %d, %d", symbol->lexical_level, symbol->offset);
                                  }
                               } else {
                                  if(symbol->category == SIMPLE_VAR || symbol->pass_type == VALUE) {
-                                    sprintf(buffer, "CREN %d,%d", symbol->lexical_level, symbol->offset);
+                                    sprintf(buffer, "CREN %d, %d", symbol->lexical_level, symbol->offset);
                                  } else {
-                                    sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                                    sprintf(buffer, "CRVL %d, %d", symbol->lexical_level, symbol->offset);
                                  }
                               }
                            } else {
                               if(symbol->pass_type == REFERENCE) {
-                                 sprintf(buffer, "CRVI %d,%d", symbol->lexical_level, symbol->offset);
+                                 sprintf(buffer, "CRVI %d, %d", symbol->lexical_level, symbol->offset);
                               } else {
-                                 sprintf(buffer, "CRVL %d,%d", symbol->lexical_level, symbol->offset);
+                                 sprintf(buffer, "CRVL %d, %d", symbol->lexical_level, symbol->offset);
                               }
                            }
                         } else {
@@ -648,13 +648,13 @@ void handle_assignment_table(symbol_entry *symbol) {
          print_error(buffer);
       } else {
          symbol->return_assigned = 1;
-         sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, - 4 - symbol->num_params);
+         sprintf(buffer, "ARMZ %d, %d", symbol->lexical_level, - 4 - symbol->num_params);
       }
    } else {
       if(symbol->pass_type == REFERENCE) {
-         sprintf(buffer, "ARMI %d,%d", symbol->lexical_level, symbol->offset);
+         sprintf(buffer, "ARMI %d, %d", symbol->lexical_level, symbol->offset);
       } else {
-         sprintf(buffer, "ARMZ %d,%d", symbol->lexical_level, symbol->offset);
+         sprintf(buffer, "ARMZ %d, %d", symbol->lexical_level, symbol->offset);
       }
    }
    generate_code(NULL, buffer);

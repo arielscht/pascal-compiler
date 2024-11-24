@@ -5,3 +5,5 @@ compiler.output
 compiler.tab.c
 compiler.tab.h
 lex.yy.c
+**/MY_MEPA
+**/diff.txt
