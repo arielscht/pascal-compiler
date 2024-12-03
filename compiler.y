@@ -208,6 +208,9 @@ procedure_signature:
 
                            remove_labels(1);
                         }
+                        else {
+                           cur_proc->params_read = 1;
+                        } 
                      } 
                      subroutine_parameters SEMICOLON
 ;
@@ -251,9 +254,12 @@ function_signature:
                            cur_proc = add_subroutine(token, entry->label, FUNC);
 
                            remove_labels(1);
+                        } else {
+                           cur_proc->params_read = 1;
                         }
                      }
-                     subroutine_parameters COLON IDENTIFIER
+                     subroutine_parameters 
+                     COLON IDENTIFIER
                      {
                         set_symbol_types(token);
                      } 
@@ -1090,6 +1096,7 @@ symbol_entry *add_symbol(char *identifier, symbol_category category, var_type ty
    symbol->num_params = 0;
    symbol->return_assigned = 0;
    symbol->implemented = 0;
+   symbol->params_read = 0;
    
    if(category == FUNC) {
       symbol->func_active = 1;
@@ -1122,7 +1129,9 @@ symbol_entry *add_subroutine(char *identifier, char *label, symbol_category subr
 
 void add_param(char *identifier, passing_type p_type) {
    add_symbol(identifier, FORMAL_PARAM, UNKNOWN, p_type, -1, lexical_level + 1, NULL);
-   cur_proc->num_params += 1;
+   if(cur_proc->params_read == 0) {
+      cur_proc->num_params += 1;
+   }
 }
 
 int main (int argc, char** argv) {

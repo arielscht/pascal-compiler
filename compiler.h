@@ -102,6 +102,7 @@ typedef struct symbol_entry
   int func_active;
   int return_assigned;
   int implemented;
+  int params_read;
   var_type type;
   passing_type pass_type;
   param_entry *params;
