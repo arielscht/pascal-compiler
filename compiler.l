@@ -169,18 +169,25 @@ div     {
           return INTDIV;
         }
 
-read     {
+read    {
           symbol = read_symbol;
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" read  ");
           return READ;
         }
         
-write     {
+write   {
           symbol = write_symbol;
           strncpy (token, yytext, TOKEN_SIZE);
           PRINT(" write  ");
           return WRITE;
+        }
+
+forward {
+          symbol = forward_symbol;
+          strncpy (token, yytext, TOKEN_SIZE);
+          PRINT(" forward  ");
+          return FORWARD;
         }
 
 :=      { 

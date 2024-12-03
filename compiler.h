@@ -50,6 +50,7 @@ typedef enum symbols
   greater_symbol,
   read_symbol,
   write_symbol,
+  forward_symbol,
 } symbols;
 
 typedef enum symbol_category
@@ -100,6 +101,7 @@ typedef struct symbol_entry
   int num_params;
   int func_active;
   int return_assigned;
+  int implemented;
   var_type type;
   passing_type pass_type;
   param_entry *params;

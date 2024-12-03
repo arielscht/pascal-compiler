@@ -25,6 +25,7 @@ int set_symbol_types(char* type);
 int set_params_offset();
 int (*get_symbol_checker(char *symbol))(void *);
 int check_symbol(void *ptr);
+int check_subroutine(void *ptr);
 int check_symbol_to_remove(void *ptr);
 symbol_entry *search_var(char *identifier);
 symbol_entry *search_var_param_or_func(char *identifier) ;
@@ -40,6 +41,7 @@ void handle_subroutine_call();
 void add_subroutine_call();
 void handle_procedure_arg();
 void handle_assignment_table(symbol_entry *symbol);
+void search_unimplemented_subroutines();
 
 int num_labels;
 char *symbol_to_find;
@@ -62,7 +64,7 @@ symbol_entry *cur_proc;
 %token IF THEN ELSE NOT OR AND WHILE DO
 %token INTDIV PLUS MINUS MULTIPLY DIVIDE
 %token EQUAL NOT_EQUAL LESS LESS_EQUAL GREATER_EQUAL GREATER
-%token READ WRITE
+%token READ WRITE FORWARD
 
 %%
 
@@ -103,6 +105,8 @@ block:
                      compound_command
                      {
                         block_entry * entry = (block_entry *)stack_pop(&block_stack);
+
+                        search_unimplemented_subroutines();
 
                         if(entry->num_vars > 0) {
                            sprintf(buffer, "DMEM %d", entry->num_vars);
@@ -185,22 +189,42 @@ subroutine_declaration:
                      | function_declaration
 ;
 
-procedure_declaration: 
-                     PROCEDURE IDENTIFIER
+procedure_declaration:
+                     procedure_forward
+                     | procedure_implementation
+;
+
+procedure_signature:
+                     PROCEDURE IDENTIFIER 
                      {
                         label_entry *entry;
+                        cur_proc = (symbol_entry*)stack_search(symbol_table, check_subroutine);
+                        
+                        if(cur_proc == NULL) {
+                           add_labels(1);
+                           
+                           entry = (label_entry *)label_stack->top;
+                           cur_proc = add_subroutine(token, entry->label, PROC);
 
-                        add_labels(1);
+                           remove_labels(1);
+                        }
+                     } 
+                     subroutine_parameters SEMICOLON
+;
 
-                        entry = (label_entry *)label_stack->top;
-                        cur_proc = add_subroutine(token, entry->label, PROC);
+procedure_forward:
+                     procedure_signature FORWARD
+;
 
+procedure_implementation:
+                     procedure_signature 
+                     {
                         sprintf(buffer, "ENPR %d", lexical_level + 1);
-                        generate_code(entry->label, buffer);
-
-                        remove_labels(1);
+                        generate_code(cur_proc->label, buffer);
+                        
+                        cur_proc->implemented = 1;
                      }
-                     subroutine_parameters SEMICOLON block
+                     block 
                      {
                         symbol_entry *entry = (symbol_entry *)symbol_table->top;
 
@@ -209,24 +233,46 @@ procedure_declaration:
                      }
 ;
 
-function_declaration:
-                     FUNCTION IDENTIFIER {
+function_declaration:  
+                     function_forward
+                     | function_implementation
+;
+
+function_signature:
+                     FUNCTION IDENTIFIER 
+                     {
                         label_entry *entry;
+                        cur_proc = (symbol_entry*)stack_search(symbol_table, check_subroutine);
 
-                        add_labels(1);
+                        if(cur_proc == NULL) {
+                           add_labels(1);
 
-                        entry = (label_entry *)label_stack->top;
-                        cur_proc = add_subroutine(token, entry->label, FUNC);
+                           entry = (label_entry *)label_stack->top;
+                           cur_proc = add_subroutine(token, entry->label, FUNC);
 
-                        sprintf(buffer, "ENPR %d", lexical_level + 1);
-                        generate_code(entry->label, buffer);
-
-                        remove_labels(1);
+                           remove_labels(1);
+                        }
                      }
-                     subroutine_parameters COLON IDENTIFIER {
+                     subroutine_parameters COLON IDENTIFIER
+                     {
                         set_symbol_types(token);
                      } 
-                     SEMICOLON block
+                     SEMICOLON
+;
+
+function_forward:
+                     function_signature FORWARD
+;
+
+function_implementation:
+                     function_signature
+                     {
+                        sprintf(buffer, "ENPR %d", lexical_level + 1);
+                        generate_code(cur_proc->label, buffer);
+                        
+                        cur_proc->implemented = 1;
+                     }
+                     block
                      {
                         symbol_entry *entry = (symbol_entry *)symbol_table->top;
                         entry->func_active = 0;
@@ -757,6 +803,28 @@ void check_exp_det_type(var_type type) {
    free(right_exp);
 }
 
+int check_unimplemented_subroutine(void *ptr) {
+   symbol_entry *elem = ptr;
+
+   if(elem->implemented == 0 && elem->lexical_level == lexical_level + 1) {
+      return 1;
+   }
+
+   return 0;
+}
+
+void search_unimplemented_subroutines() {
+   symbol_entry *symbol;
+
+   symbol = (symbol_entry *)stack_search(symbol_table, check_unimplemented_subroutine);
+
+   if(symbol != NULL) {
+      sprintf(buffer, "subroutine %s was forwarded and not implemented", symbol->identifier);
+      print_error(buffer);
+   }
+}
+
+
 symbol_entry *search_symbol(char *identifier) {
    symbol_entry *symbol;
    symbol_to_find = identifier;
@@ -805,6 +873,16 @@ symbol_entry *search_subroutine(char *identifier) {
    };
 
    return symbol;
+}
+
+int check_subroutine(void *ptr) {
+   symbol_entry *elem = ptr;
+
+   if(strcmp(token, elem->identifier) == 0 && elem->lexical_level == lexical_level + 1) {
+      return 1;
+   }
+
+   return 0;
 }
 
 int check_symbol(void *ptr) {
@@ -1011,6 +1089,7 @@ symbol_entry *add_symbol(char *identifier, symbol_category category, var_type ty
    symbol->pass_type = p_type;
    symbol->num_params = 0;
    symbol->return_assigned = 0;
+   symbol->implemented = 0;
    
    if(category == FUNC) {
       symbol->func_active = 1;
